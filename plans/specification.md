@@ -30,9 +30,8 @@ This document defines target behavior, not evidence that the Telegram integratio
 12. After confirmed ChatGPT receipt of a new message, attempt one typing indicator. Do not refresh it throughout the Dot's work or automatically add an eyes reaction.
 13. Preserve the bot-authored-only restriction on message edits/deletes using signed message references returned by confirmed sends, without storing write results.
 14. Configure through Sites environment settings. Keep only a minimal landing page, authenticated setup view, and public health response. Do not add a configuration GUI, operational dashboard, audit history, or speculative maintenance system.
-15. Establish feasibility with the narrow compatibility gate in section 14 before completing the full catalog.
 
-Sections below resolve routine implementation details within these decisions. A prototype may refine provisional timeouts, but must not silently expand scope, retention, access, or infrastructure.
+Sections below resolve routine implementation details within these decisions. Verification may refine provisional timeouts, but must not silently expand scope, retention, access, or infrastructure.
 
 ## 3. Scope and user experience
 
@@ -78,7 +77,7 @@ Unsupported updates are not forwarded as fabricated text. For this version, ackn
 - Atomic deduplication claims, fencing, deadline-aware delivery, independent subscription fanout, and request-driven cleanup.
 - TypeScript, Vitest, Worker build checks, and relevant protocol/lifecycle/privacy test patterns.
 
-Use SlackDot's known dependency versions as the initial compatibility baseline; select and pin a compatible grammY version and record the tested versions in prototype results. Do not claim untested dependency combinations are equivalent.
+Use SlackDot's known dependency versions as the initial compatibility baseline; select and pin a compatible grammY version and record the tested versions in verification results. Do not claim untested dependency combinations are equivalent.
 
 ### Replace or remove
 
@@ -239,7 +238,7 @@ Retain a 72-hour default/maximum lifetime, honor shorter positive requested life
 
 Validate signing secrets and exact HTTPS callback origins. Verify callbacks with signed, fresh challenges before activation. Cache successful verification for at most five minutes within the authorized subscription identity; expiry, reactivation, or secret changes require reverification. Encrypt stored secrets with AES-GCM and bind encryption to the subscription ID. During rotation, preserve the prior secret for at most one minute and send the appropriate overlapping signatures.
 
-Preserve SlackDot's operator-verified exact-origin callback policy, redirect rejection, and public-destination restrictions. Do not expand it to arbitrary callback destinations or claim general DNS pinning that Worker fetch cannot establish. Verify the actual native callback origin during the prototype.
+Preserve SlackDot's operator-verified exact-origin callback policy, redirect rejection, and public-destination restrictions. Do not expand it to arbitrary callback destinations or claim general DNS pinning that Worker fetch cannot establish. Verify the actual native callback origin during integration testing.
 
 Unsubscribe is owner-scoped and idempotent, and works without a live Telegram lookup. Support canonical event/arguments/destination removal; an ID form may be retained as a small compatibility convenience. Remove subscriptions when authorization is revoked or the installation binding is no longer valid. Return `cursor: null` and no replay claims throughout.
 
@@ -359,13 +358,13 @@ Use synthetic fixtures. Before deployment, test and type-check the changed imple
 - Fixed-destination writes, tampered/cross-owner/cross-bot references, incoming-message deletion attempts, missing targets, and ambiguous write outcomes without automatic resend.
 - D1 schema and stored values contain only permitted data. Logs, responses, fixtures, and build artifacts contain no real secrets or message content.
 
-## 14. Compatibility gate and hosted acceptance
+## 14. Compatibility checks and hosted acceptance
 
 All rows are pending. Record exact dependency versions, tested source revision, environment, observed results, and limitations when these checks are performed. Do not copy SlackDot's pass status.
 
-### Narrow prototype gate
+### Platform integration checks
 
-Use only the minimum implementation needed to verify the platform path: authenticated owner-text ingress, subscription lifecycle, bounded callback delivery, connection information, one confirmed send, and typing feedback. Any isolated test fixture must use synthetic content and be removed before a production-ready result is claimed.
+Verify the implemented application against the checks below. These are acceptance requirements, not a separate prototype phase or a prescribed implementation sequence. Any isolated test fixture must use synthetic content and be removed before a production-ready result is claimed.
 
 | Check | Required evidence |
 | --- | --- |
@@ -380,7 +379,7 @@ Use only the minimum implementation needed to verify the platform path: authenti
 
 A failure must identify the unsupported capability and its practical effect. Do not resolve it by adding payload storage, a scheduler, broader Telegram access, or unauthenticated endpoints. Revisit a material design decision with the owner if the selected platform cannot meet it.
 
-### Full catalog acceptance after the gate
+### Tool and event acceptance
 
 - Confirm actual new and edited owner text events arrive with correct identities, text, occurrence times, and reply relationship. Test rapid messages and edits without promising ordering or automatic context assembly.
 - Verify the Dot can send, reply, edit, delete, set a reaction, and clear a reaction on an isolated owner-approved fixture. Verify signed references reject tampering and cannot authorize deletion of an owner-authored message.
@@ -393,7 +392,7 @@ A failure must identify the unsupported capability and its practical effect. Do 
 
 ## 15. References and research status
 
-The design review used the current SlackDot repository, official Telegram and grammY documentation, OpenAI MCP Events documentation, Cloudflare execution-context documentation, and installed Sites guidance. Recheck evolving SDK/protocol/platform contracts during the compatibility prototype.
+The design review used the current SlackDot repository, official Telegram and grammY documentation, OpenAI MCP Events documentation, Cloudflare execution-context documentation, and installed Sites guidance. Recheck evolving SDK/protocol/platform contracts when implementing and verifying the integration.
 
 - [Telegram Bot API](https://core.telegram.org/bots/api)
 - [Telegram bot introduction](https://core.telegram.org/bots)
