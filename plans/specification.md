@@ -1,6 +1,6 @@
 # Dotagram specification
 
-Status: messaging runtime deployed; owner-authenticated setup revision implemented and locally verified on 2026-11-08. Deployment and hosted setup acceptance remain pending. Acceptance evidence remains in docs/verification.md.
+Status: messaging runtime and owner-authenticated setup are implemented. This specification describes reusable application behavior; it contains no installation state.
 
 Last updated: 2026-11-08
 
@@ -10,7 +10,7 @@ Dotagram is a lightweight TypeScript bridge that lets a ChatGPT Dot receive mess
 
 The Dot maintains its own persistent context and performs reasoning in ChatGPT. Dotagram transports individual messages and tool operations. It does not maintain a conversation, retrieve message history, accumulate context, or run a separate model.
 
-The architectural baseline is the current SlackDot source reviewed at `D:\Projects\Vibe\SlackDot`, particularly its specification, installation guide, MCP server, event delivery, subscription lifecycle, deduplication, and tests. Preserve material decisions that are independent of Slack. Earlier SlackDot prototypes with stored events, outboxes, delivery histories, and write ledgers are superseded designs and must not be copied.
+The architectural baseline is the SlackDot reference source, particularly its specification, installation guide, MCP server, event delivery, subscription lifecycle, deduplication, and tests. Preserve material decisions that are independent of Slack. Earlier SlackDot prototypes with stored events, outboxes, delivery histories, and write ledgers are superseded designs and must not be copied.
 
 SlackDot establishes the feasibility of delivering MCP Events through ChatGPT Sites and provides the working reference implementation. Dotagram's Telegram-specific integration still requires normal implementation and acceptance verification; no separate compatibility prototype or feasibility gate is required. This document defines target behavior, not evidence that the Telegram integration works. Writing this specification does not authorize starting implementation or deployment.
 
@@ -110,7 +110,7 @@ docs/install.md                 Ordered installation procedure
 plugin/skills/use-dotagram/     Tool/event reference for the connected Dot
 ```
 
-These paths define implementation boundaries, including the implemented lib/setup boundary. Earlier messaging acceptance does not establish hosted acceptance of the setup revision.
+These paths define implementation boundaries, including the implemented lib/setup boundary. Local validation does not establish hosted acceptance for a particular installation.
 
 ## 5. Configuration and authorization
 
@@ -326,6 +326,8 @@ This section replaces the local Python installation workflow. All Telegram insta
 
 Sites tools remain responsible for saving environment settings and applying deployments. The Worker does not receive Sites management credentials, update its own environment, or persist enrollment state. Setup offers three fixed actions, not arbitrary methods, URLs, destinations, or configuration mutation. Keep the existing five MCP tools and two events unchanged.
 
+The public repository contains reusable source and an unbound hosting manifest, not an installation. Keep generated Site IDs and deployment-specific manifest changes in a separate deployment checkout/private Sites source repository. Keep owner/bot configuration and installation/hosted-acceptance records out of the public repository. Fresh installation is the default; only resume a Site explicitly identified by the user after verifying it exists and is accessible.
+
 ### Framework server actions and authorization
 
 - Keep the existing genuine Sites sign-in. The initial setup page may show a signed-in visitor their own Site identity so the installer can configure `OWNER_USER_ID`; no first visitor becomes owner automatically.
@@ -411,7 +413,7 @@ Use synthetic fixtures. Before deployment, test and type-check the changed imple
 
 ## 14. Compatibility checks and hosted acceptance
 
-Track each row in docs/verification.md with exact dependency versions, tested source revision, environment, observed results, and limitations. Do not copy SlackDot's pass status.
+Report each check's dependency versions, tested source revision, environment, observed results and limitations in the private installation conversation. Do not copy SlackDot's pass status.
 
 ### Platform integration checks
 

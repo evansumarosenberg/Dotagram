@@ -1,6 +1,6 @@
 # Dotagram implementation plan
 
-Status: original runtime deployed with qualified native acceptance; owner-authenticated setup revision implemented and locally verified, not deployed. See [verification record](../docs/verification.md).
+Status: runtime and owner-authenticated setup implemented. Validate each installation against the specification; this plan contains no deployment state.
 
 Last updated: 2026-11-08
 
@@ -8,11 +8,11 @@ Source of truth: [Dotagram specification](specification.md).
 
 ## 1. Objective and approach
 
-Implement the reviewed specification by adapting the current SlackDot application at `D:\Projects\Vibe\SlackDot`. Preserve its Sites deployment integration, MCP transport, subscription lifecycle, minimal persistence, and bounded event delivery. Replace its Slack adapter and catalog with the owner-only Telegram behavior described in the specification.
+Implement the reviewed specification by adapting the SlackDot reference application. Preserve its Sites deployment integration, MCP transport, subscription lifecycle, minimal persistence, and bounded event delivery. Replace its Slack adapter and catalog with the owner-only Telegram behavior described in the specification.
 
 SlackDot already demonstrates MCP Events delivery through ChatGPT Sites. Build the intended Dotagram application directly. There is no separate compatibility prototype or feasibility phase; platform checks are ordinary verification of the resulting application.
 
-This plan was written before implementation. The implementation task has completed the local application and validation work described below. The existing installation has passed messaging acceptance; outstanding checks are recorded separately. The 2026-11-08 setup revision is implemented locally; its deployment and hosted acceptance remain pending.
+This plan was written before implementation. The local application and validation work described below is complete. Hosted acceptance is required for each installation and belongs in its private installation conversation, not in this public plan.
 
 ## 2. Constraints that apply to every task
 
@@ -44,11 +44,11 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 | 6 | Complete MCP catalog and minimal setup experience | 2–5 | Complete locally |
 | 7 | Installation instructions and plugin reference | 6 | Complete locally |
 | 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Complete locally |
-| 9 | Original Sites installation and native acceptance | 8 | Messaging passed; remaining checks recorded |
+| 9 | Sites installation and native acceptance | 8 | Required per installation; results kept privately |
 | 10 | Setup authorization and bootstrap API client | Revised specification section 11 | Complete locally |
 | 11 | Fixed setup actions and browser flow | 10 | Implemented; browser visual QA unavailable |
 | 12 | Retire Python workflow and reconcile documentation | 11 | Complete locally |
-| 13 | Replacement-flow validation and existing-Site upgrade | 10-12 | Local checks passed; deployment/hosted acceptance pending |
+| 13 | Setup validation and installation/upgrade acceptance | 10-12 | Local checks passed; hosted checks required per installation |
 
 ### Task 1 — Prepare the application foundation
 
@@ -215,19 +215,19 @@ Implement `inspectTelegramSetup`, `verifyTelegramOwner`, and `registerTelegramWe
 
 ### Task 12 - Retire workaround and reconcile documentation
 
-**Ownership/files:** `scripts/telegram-bootstrap.py`, `scripts/telegram-register.py`, `tests/bootstrap/`, `docs/install.md`, `README.md`, `.env.example`, `AGENTS.md`, verification/progress documents and plugin reference as needed.
+**Ownership/files:** `scripts/telegram-bootstrap.py`, `scripts/telegram-register.py`, `tests/bootstrap/`, `docs/install.md`, `README.md`, `.env.example`, `AGENTS.md`, reusable verification instructions and plugin reference as needed.
 
 Remove the Python helpers and their exclusive tests after the replacement works; translate meaningful checks into the TypeScript setup suite. Remove Python prerequisites, subprocess/environment handoff instructions and bootstrap artifact production. Do not delete existing local installation artifacts as an implicit cleanup step; they are not needed by the new flow and any cleanup must be explicit. Document the ordered installation phases and their deployment/configuration dependencies, exact owner handoffs, preserved existing settings and framework server-action invocation. Keep the revised installation guide aligned with the implemented framework actions; do not restore superseded custom-origin/configuration instructions or add an origin key to `.env.example`. Keep the user's deterministic automation text verbatim. Correct stale statuses, overstated compliance claims and damaged document encoding without rewriting historical acceptance as new evidence.
 
-### Task 13 - Validate and upgrade the existing Site
+### Task 13 - Validate setup and installation/upgrade behavior
 
 **Ownership/files:** setup unit/protocol/Worker tests and verification documentation; use supported Sites tooling for any later publication.
 
 Run focused setup tests, full npm test, typecheck, supported Sites build, affected synthetic built-Worker messaging/setup scenarios, and production-bundle/privacy inspection. Use synthetic services for clean-install and conflict/timeout cases; never delete the live webhook or re-enroll the live owner to simulate a fresh installation. Verify the browser invokes the real framework server-action path with Sites authentication and per-action owner authorization. Preserve built-in framework protections and request limits; do not add custom origin validation. Confirm webhook construction produces the exact current Site URL.
 
-When implementation/publication is authorized, retain the existing Site, bot, owner IDs, keys, database, plugin, subscriptions and automation. Deploy the revision without adding an origin setting or changing existing environment values for this purpose. Distinguish bootstrap identity/dispatch evidence while the verification guard is false from post-enable action authorization. Pair successful owner inspection with anonymous/forged-header/signed-in-non-owner action rejection after preliminary settings are applied; do not count blanket pre-enable denial as those results. On the existing Site, preserve the enabled guard and verify registration is a no-write already-configured result. Check subscription/environment preservation and an owner-message round trip. Record the replacement flow's clean-install synthetic evidence separately from hosted inspection/resume evidence. A genuine new-bot/new-Site installation is not implied or required as an unapproved test resource.
+When installation is requested, create a fresh Site from the unbound public source unless the user explicitly identifies an existing Site to resume. Keep generated configuration in a separate deployment checkout/private Sites source repository and report progress privately. For an explicitly requested upgrade, verify the identified Site and preserve its bot, owner bindings, keys, database, plugin, subscriptions and automation. Do not add an origin setting. Distinguish bootstrap identity/dispatch evidence while the verification guard is false from post-enable action authorization. Pair successful owner inspection with anonymous/forged-header/signed-in-non-owner action rejection after preliminary settings are applied; do not count blanket pre-enable denial as those results. For upgrade acceptance, preserve the enabled guard and verify registration is a no-write already-configured result, then check subscription/environment preservation and an owner-message round trip. Keep clean-install synthetic evidence separate from hosted inspection/resume evidence. Do not create live test resources without authorization.
 
-**Complete when:** the replacement passes applicable checks, the existing installation remains intact, Python/custom handoff is removed, and any unavailable hosted cases are explicitly reported. Do not mark original acceptance as proof of the replacement.
+**Complete when:** the replacement passes applicable checks, Python/custom handoff is removed, and any unavailable hosted cases are explicitly reported in the private installation conversation. An upgrade must preserve the identified installation. Do not treat another installation's results as proof of acceptance.
 
 ## 4. Acceptance coverage map
 
@@ -252,15 +252,13 @@ Update the task statuses as work actually completes. Keep local implementation c
 
 - [x] Tasks 1–7: complete application and documentation implemented.
 - [x] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
-- [ ] Task 9: installation and native hosted acceptance completed, with any limitations stated.
 - [x] No additional application tables, Slack dependencies, or background delivery services introduced.
 - [x] Retire the unapproved Python installation/custom credential handoff through tasks 10-12.
 - [x] Owner-authenticated setup revision implemented and locally verified.
-- [ ] Task 13 hosted upgrade and owner-session acceptance (deployment explicitly excluded from this implementation request).
-- [x] Local fixtures use synthetic data. Subsequent authorized installation and owner-reported native acceptance are recorded separately.
+- [x] Local fixtures use synthetic data.
 
-Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. Authorized installation subsequently created the Site/webhook/plugin, and the intended Dot established native subscriptions; remaining hosted acceptance is tracked in the verification record.
+Tasks 9 and 13's hosted checks apply separately to each installation; their progress and results are not tracked in this public plan. No separate prototype was built.
 
 ## 6. Setup design clarification (2026-11-08)
 
-Tasks 10-13 use framework server actions rather than custom setup POST routes. The proposed custom origin checks and additional origin environment requirement are removed. Sites authentication and explicit server-side owner authorization remain required. Tasks 10-12 and task 13's local validation are complete. The installation guide matches the replacement and preserves detailed agent/human handoffs, including locating the intended Dot. Deployment and hosted acceptance remain pending; no installed settings, bindings, subscriptions or automation were changed.
+Tasks 10-13 use framework server actions rather than custom setup POST routes. The proposed custom origin checks and additional origin environment requirement are removed. Sites authentication and explicit server-side owner authorization remain required. Tasks 10-12 and task 13's local validation are complete. The installation guide matches the replacement and preserves detailed agent/human handoffs, including locating the intended Dot. Each installation requires its own hosted acceptance.

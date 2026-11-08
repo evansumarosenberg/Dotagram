@@ -2,17 +2,17 @@
 
 **Audience:** the installation agent, whether Codex or ChatGPT Work, including a cloud session. The owner completes sign-in, BotFather, credential entry, and Telegram identity confirmation. The owner's intended **Dot in ChatGPT** creates and runs the native event automation. These are different roles; do not assume the installer is the controlling Dot.
 
-**Availability:** the three framework server actions are implemented and locally verified in this checkout, but the replacement has not been deployed or accepted in a hosted owner session. Before installation, select this revised source and review the remaining hosted checks in [verification](verification.md#setup-revision-status-2026-11-08). The retired Python helpers are removed. Do not treat an older deployment's missing setup controls as permission to revive them. The existing installed bridge and its automation remain operational and must be preserved.
+**Starting point:** this repository is reusable application source, not an existing installation. Its hosting manifest contains no Site ID and starts with MCP publication disabled. Create a fresh installation unless the user explicitly asks to resume an identified Site. The three framework setup actions are implemented; perform the checks in this guide for the source and installation being evaluated.
 
 Read [AGENTS.md](../AGENTS.md), [specification section 11](../plans/specification.md#11-owner-authenticated-setup-and-installation), and the current installed Sites skill, including its identity/secrets and Site MCP references. Use the application source and retained Sites integration; do not replace it with a starter or a separate compatibility service. This guide does not authorize implementation of missing features.
 
 ## Session access and human handoffs
 
-Use the session's supported Sites source/build/publication environment. Do not assume the owner's Windows paths exist in a cloud session or ask the owner to run local installation commands. Recover a partial installation using its existing Site and source rather than starting again. Check actual browser access; an agent browser may not share the owner's local sign-in.
+Use the session's supported Sites source/build/publication environment. Do not assume the owner's Windows paths exist in a cloud session or ask the owner to run local installation commands. When explicitly resuming, verify the user-identified Site and its source before continuing. Check actual browser access; an agent browser may not share the owner's local sign-in.
 
 | Needed access | Installation agent does | Owner handoff when needed |
 | --- | --- | --- |
-| Source, build, publication | Use the installed Sites workflow and existing checkout/project ID | Enable available Sites access or resume the same installation in a capable session |
+| Source, build, publication | Use the installed Sites workflow to create a Site, or verify the Site explicitly identified for resumption | Enable available Sites access or continue the identified installation in a capable session |
 | Site owner sign-in | Open the exact Site's `/setup` in a supported authenticated browser | Owner signs in there and returns only the displayed Site identity |
 | Bot creation and token entry | Supply BotFather and the actual Site settings link; check setting presence | Owner creates/selects the intended bot and saves its token directly as a Site secret |
 | Setup actions | Use the owner's authenticated setup UI through supported browser access | Owner clicks the indicated action and returns only its non-secret result or sanitized error |
@@ -25,12 +25,12 @@ The only Telegram credential the owner supplies is `TELEGRAM_BOT_TOKEN`, directl
 
 When handing off, provide the actual link, exact action, expected result, and permitted non-secret response. Do not give an abstract instruction such as "configure Telegram." A prepared handoff prompt has not been delivered automatically; a plugin connection in the installer chat does not prove connection in the Dot's chat.
 
-## Select the installation and record progress
+## Select a fresh installation or an explicit resume
 
-1. Read `.openai/hosting.json` and any existing non-secret installation note. A real `project_id` identifies an existing Site: retrieve and reuse it. Do not create another because credentials are masked or a session changed. An absent/explicit template ID is not a real Site ID.
-2. Distinguish a fresh installation from a resume/upgrade. For this project's existing installation, preserve its bot, verified owner IDs, public audience, database, keys, plugin, MCP capability, and intended automation. Do not reset capabilities to `[]` on a working installation.
-3. Record the selected checkout/commit, Site ID and URL, saved version/deployment IDs and terminal status, applied environment revision, verified bot/owner IDs, exact plugin reference, current phase, and evidence still missing. Retain only non-secret configuration/status, never live message payloads, message references, or callback credentials.
-4. Resume at the first incomplete phase. Do not repeat owner enrollment or registration merely to make a checklist appear complete.
+1. Default to a fresh installation from this public source. An ID found in an old clone or document is not authorization to reuse a Site. For resumption, obtain the intended Site from the user or their private installation conversation, retrieve it through Sites, and verify it exists and is accessible. If it is deleted or unavailable, report that result instead of treating it as an active installation.
+2. For a fresh installation, prepare a separate deployment checkout using the supported Sites workflow. Persist the newly returned Site ID in that checkout's hosting manifest as required by Sites. Keep that deployment source in the installation's private Sites source repository; do not commit or push generated Site IDs, deployment metadata, bot/owner configuration, or installation records back to this reusable public repository.
+3. Keep non-secret installation progress in the private installation conversation: selected source revision, Site link, completed phase and next step. Never write installation progress or hosted acceptance reports into public repository documentation. Never retain live message payloads, message references or callback credentials in progress reports.
+4. When explicitly resuming a verified installation, preserve its bot, owner bindings, audience, keys, database, plugin, MCP publication state and automation. Continue from the first incomplete phase; do not repeat enrollment, recreate resources or reset a working installation to fresh-install defaults.
 
 ## Sequence and dependencies
 
@@ -90,7 +90,7 @@ Use Sites authentication and the framework's built-in server-action protections.
 | `TELEGRAM_BOT_INFO` | Installer in phase 4: validated setup result, not a guessed object | No |
 | `TELEGRAM_OWNER_USER_ID` | Installer in phase 4: explicitly confirmed human ID | No |
 
-The existing reviewed callback policy uses `https://connectors.api.openai.com`. Preserve it for this installation and verify actual native callback compatibility; do not expand to wildcards or arbitrary origins to get a challenge to pass. This is the MCP delivery destination policy, not an additional setup-origin check. `DB` is a provisioned D1 binding, not a ninth string variable.
+Verify the exact OpenAI-owned callback origin through the current Sites/MCP documentation and native subscription integration before configuring `CALLBACK_ALLOWED_ORIGINS`. Do not use wildcards or arbitrary origins to get a challenge to pass. This is the MCP delivery destination policy, not an additional setup-origin check. `DB` is a provisioned D1 binding, not a ninth string variable.
 
 4. Deploy the saved source version to apply the preliminary settings and record its environment revision. Keep MCP disabled for a fresh installation. The owner may now invoke **Inspect bot** even though Telegram bot-info/owner settings have not yet been derived.
 
@@ -196,15 +196,15 @@ Confirm separately: the plugin is usable here, the native event automation is sa
 1. Ask the owner to send a fresh synthetic text in their private chat with the bot. Confirm the intended Dot receives a new-message event and its resulting response appears in Telegram. A manually requested tool send alone does not establish this path.
 2. Have the owner edit that message and confirm an edited-message event and response. Distinct edits are not repeated delivery of the same event. Check the saved automation text if review rejects a response because of an unintended reply limit; do not bypass the rejection.
 3. Have the owner observe the one-shot typing indicator after a new-message callback is accepted. Record visual confirmation separately from API success and the eventual reply. No repeated typing refresh or automatic eyes reaction is expected.
-4. Use [native acceptance instructions](remaining-acceptance.md) for isolated owner-authorized tests of multiple replies, reply linkage, bot edit/delete, reactions, signed-reference rejection and rapid events. Preserve existing completed evidence for this same installation rather than repeating tests unnecessarily.
+4. Perform isolated owner-authorized tests of multiple replies, reply linkage, bot edit/delete, reactions, signed-reference rejection and rapid events. Preserve existing completed evidence for this same installation rather than repeating tests unnecessarily.
 5. Record native protocol/lifecycle checks only when exposed controls make them observable. Test unsubscribe only with a demonstrably separate disposable subscription; never cancel the controlling automation to complete a checklist. Use existing synthetic coverage for outages, expiry, blocked-write errors and excluded contexts rather than disrupting the live bot.
 6. Inspect permitted database schema without exporting operational content. Verify a normal redeployment preserves keys/subscriptions and subsequent messaging. Clean up only explicitly designated acceptance fixtures, not owner messages or production subscriptions.
 
-Report these outcomes separately: deployed/configured Site, webhook registration, plugin availability in the intended Dot, saved/enabled automation, new-message round trip, edited-message round trip, and additional acceptance results/gaps. The owner's Telegram observation is valid evidence; label it owner-reported. Do not mark all specification checks passed merely because messaging works. Update [verification](verification.md) and the installation progress note without retaining message content or signed references.
+Report these outcomes separately in the private installation conversation: deployed/configured Site, webhook registration, plugin availability in the intended Dot, saved/enabled automation, new-message round trip, edited-message round trip, and additional acceptance results/gaps. The owner's Telegram observation is valid evidence; label it owner-reported. Do not mark all specification checks passed merely because messaging works. Keep these installation-specific results out of this public repository; do not retain message content or signed references in reports.
 
 ## Resuming or reporting a blocker
 
-Resume from the recorded first incomplete phase. Preserve the same Site, bot, human/Site owner bindings, keys, database, plugin and intended automation. Existing verified owners skip nonce enrollment; matching webhooks use inspection/no-write registration. Never disable a working webhook or MCP publication to replay a fresh-install sequence.
+When the user explicitly requests resumption, verify the identified Site still exists and continue from the first incomplete phase recorded in their private installation conversation. Preserve its bot, human/Site owner bindings, keys, database, plugin and intended automation. Existing verified owners skip nonce enrollment; matching webhooks use inspection/no-write registration. Never disable a working webhook or MCP publication to replay a fresh-install sequence.
 
 Report the exact phase, operation, sanitized error, completed evidence, and one concrete next action. Examples: the owner must sign in at the supplied setup link, correct a token directly in Sites, confirm a candidate ID, or open their named Dot to connect the plugin. Where the agent has the required tools and authorization, complete the action instead of assigning it to the owner. Secret masking by itself requires no handoff.
 
