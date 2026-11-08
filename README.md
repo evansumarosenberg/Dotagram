@@ -1,40 +1,35 @@
 # Dotagram
 
-A lightweight bridge from your private Telegram bot conversation to your ChatGPT Dot. Built with grammY, MCP 2.0, and the Sites Worker/D1 foundation adapted from SlackDot.
+> The ’grams must flow.
 
-Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages using signed references, and set or clear reactions. Groups, media, history lookup, and arbitrary destinations are outside scope.
+A lightweight bridge from your private Telegram bot conversation to your Dot, deployed on ChatGPT Sites. No external infrastructure needed!
 
-Only subscriptions and opaque deduplication records persist. Message content, write results, references, feedback, and conversation history are not stored. Your Dot maintains its own context. Delivery runs in bounded request background work: no queue, polling service, scheduler, or replay. An interrupted acknowledged update can be lost; duplicates and out-of-order events remain possible. A brief typing action follows confirmed callback receipt, not Dot completion.
+Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages using signed references, and set or clear reactions. Groups and arbitrary destinations are intentionally outside scope.
 
-- [Installation](docs/install.md): owner-authenticated setup procedure. The replacement is implemented locally; deployment and hosted setup acceptance are pending. Existing messaging remains deployed.
-- [Tool and event reference](plugin/skills/use-dotagram/SKILL.md).
-- [Specification](plans/specification.md) and [implementation plan](plans/implementation-plan.md).
-- [Verification record](docs/verification.md): local results and pending hosted acceptance.
+MCP 2.0 event subscriptions are supported, so the Dot can create event-triggered automations for new and edited messages.
 
-## Development
+## Install with Codex or ChatGPT Work
 
-Requires Node 22.13+ and the installed Sites workflow. Use its `install-dependencies.mjs` and `build-site.mjs` helpers. The committed lockfile pins the tested dependency tree. For ordinary standalone development, `npm run install:ci` and `npm run build` use the retained Sites scripts.
+Use **Codex or a ChatGPT Work cloud session** with the Sites plugin and plugin connection tools available to build, deploy and configure Dotagram. You need a Telegram account and a bot created through BotFather. Once installation is ready, your intended **Dot in ChatGPT** will connect the plugin and create the event-triggered automation.
 
-```sh
-npm test
-npm run typecheck
-npm run build
-node tests/compatibility/worker-smoke.mjs
-node tests/compatibility/setup-worker.mjs
+Give your installation agent this prompt:
+
+```text
+Read https://github.com/evansumarosenberg/Dotagram/blob/master/README.md and follow its installation instructions to set up Dotagram for me.
 ```
 
-Worker scenarios also accept `--scenario=retry`, `exhaustion`, `permanent`, `rate-limit`, `timeout`, `interrupt`, `fanout`, `duplicate`, and `notice-failure`. They exercise the built application using synthetic outbound services; no live Telegram account is contacted.
+**Installation agent: read [AGENTS.md](AGENTS.md), then follow [docs/install.md](docs/install.md) in order.** The installation guide is the canonical procedure, including manual handoffs, configuration, verification and the prompt to give the Dot.
 
-The setup Worker check exercises the actual framework server-action path with synthetic identity and Telegram responses. Its optional `--preview` serves a local synthetic owner view for UI checks; it does not establish hosted authentication or contact Telegram. Production setup uses Sites-held secrets and explicit page actions, with no Python installer or credential handoff.
+You (the human) will create or select the Telegram bot in BotFather and enter only this Site environment value when prompted:
 
-This checkout already identifies the installed Site with MCP enabled; preserve that identity and configuration. A fresh installation begins with MCP publication disabled until owner configuration and identity-boundary checks are complete. Environment key names are documented in [.env.example](.env.example); never commit populated credentials.
-
-After the first build, apply the initial migration to an empty local preview database:
-
-```sh
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_pretty_killmonger.sql
+```dotenv
+TELEGRAM_BOT_TOKEN=
 ```
 
-Run that migration once per database. Sites applies hosted migrations during publication. Later schema changes require new migrations; requests never create or alter tables.
+The installation agent configures the remaining values. You may also need to sign in, approve the plugin connection, send the setup page's verification nonce to your bot, explicitly confirm your Telegram owner account, and send a test DM. Some authenticated steps may need your browser. Enter the bot token directly in Sites settings; keep secrets out of chat.
 
-MIT licensed. The retained Sites build plugin has its own notice in `scripts/vite/sites-vite-plugin.LICENSE`.
+Each installation connects one Telegram bot, one verified human owner and one controlling Dot. When resuming an existing installation, keep the same bot, Site, plugin and automation; do not repeat owner enrollment or replace a working webhook.
+
+## Privacy
+
+Dotagram stores event subscriptions and opaque, privacy-preserving records that suppress repeat event delivery for 25 hours. Expired records are removed on subsequent activity; no message content or delivery history is retained.
