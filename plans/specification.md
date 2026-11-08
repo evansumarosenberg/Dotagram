@@ -12,7 +12,7 @@ The Dot maintains its own persistent context and performs reasoning in ChatGPT. 
 
 The architectural baseline is the current SlackDot source reviewed at `D:\Projects\Vibe\SlackDot`, particularly its specification, installation guide, MCP server, event delivery, subscription lifecycle, deduplication, and tests. Preserve material decisions that are independent of Slack. Earlier SlackDot prototypes with stored events, outboxes, delivery histories, and write ledgers are superseded designs and must not be copied.
 
-This document defines target behavior, not evidence that the Telegram integration works. SlackDot's acceptance results do not establish Dotagram compatibility. Writing this specification does not authorize starting implementation or deployment.
+SlackDot establishes the feasibility of delivering MCP Events through ChatGPT Sites and provides the working reference implementation. Dotagram's Telegram-specific integration still requires normal implementation and acceptance verification; no separate compatibility prototype or feasibility gate is required. This document defines target behavior, not evidence that the Telegram integration works. Writing this specification does not authorize starting implementation or deployment.
 
 ## 2. Accepted decisions
 
@@ -152,17 +152,17 @@ Every tool supplies the destination from validated server configuration. Do not 
 
 Bind subscriptions and signed references to the configured bot and human owner as well as the Site principal. Changing configuration must not silently redirect existing subscriptions or references to another owner or bot.
 
-Treat owner block/unblock updates (`my_chat_member`) as internal lifecycle signals, not MCP events: a validated block deletes affected subscriptions, and an unblock does not recreate them. Re-read subscription state before callbacks. Do not promise instantaneous knowledge of revocation when Telegram updates are missing. [Telegram update contract](https://core.telegram.org/bots/api#update)
+Blocking or unblocking the bot does not change Dotagram subscriptions. Monitoring cancellation uses authenticated MCP unsubscribe; expiry and authorization checks still apply. Do not subscribe to or process `my_chat_member` updates for lifecycle management. A Telegram write rejection is an operation outcome and must not delete subscriptions. `getMe` verifies bot identity and credentials, not whether the owner has blocked the bot. [Telegram bot identity](https://core.telegram.org/bots/api#getme)
 
 ## 6. Telegram adapter and ingress behavior
 
-Use HTTPS webhooks, not `bot.start()` or polling in the deployed application. Register `message`, `edited_message`, and `my_chat_member` explicitly. Still validate every received update because the webhook filter is not an authorization boundary.
+Use HTTPS webhooks, not `bot.start()` or polling in the deployed application. Register only `message` and `edited_message` explicitly. Still validate every received update because the webhook filter is not an authorization boundary.
 
 Supply validated bot information during grammY initialization so ingress does not depend on an implicit `getMe` network round trip. The middleware must finish its short normalization/scheduling work; do not use a grammY timeout that returns success while untracked middleware continues. [grammY webhook lifecycle](https://grammy.dev/guide/deployment-types)
 
 Disable webhook-reply optimization explicitly. Telegram writes must be separate API calls with observable results. Configure native Worker fetch, redirect rejection, cancellation, bounded timeouts, and sanitized errors. Keep sensitive logging disabled; Telegram API URLs contain the bot token. [grammY API client configuration](https://grammy.dev/ref/core/apiclientoptions)
 
-Apply a bounded request-body reader, initially 256 KiB. Reject wrong methods, missing/incorrect secrets, malformed JSON, oversized bodies, and invalid supported-update structures using appropriate HTTP errors. Authenticated updates from other users or unsupported contexts receive a successful acknowledgment and no delivery, storage, or bot response.
+Apply a bounded request-body reader, initially 256 KiB. Reject wrong methods, missing/incorrect secrets, malformed JSON, oversized bodies, and invalid supported-update structures using appropriate HTTP errors. Validate the fields required for authentication, scope checks, and supported-message processing, including recognized fields that identify excluded contexts. Accept and discard unknown Telegram fields rather than applying strict MCP object schemas to upstream Update/Message objects. Authenticated unknown update variants, updates from other users, and unsupported contexts receive a successful acknowledgment and no delivery, storage, or bot response. Only allowlisted normalized fields may enter callback payloads.
 
 For an eligible update, record the invocation acceptance time, normalize in memory, register the delivery promise with `ctx.waitUntil()`, then return success. If required configuration or background execution is unavailable, fail rather than pretending eligible work was scheduled. Do not await callbacks or Telegram writes on this acknowledgment path.
 
@@ -232,7 +232,7 @@ Normalize only the allowlisted fields. User text is data, not injected automatio
 
 ### Subscription lifecycle
 
-Preserve `events/list`, `events/subscribe`, and `events/unsubscribe` on the authenticated MCP endpoint. Advertise `capabilities.events`, `delivery: ["webhook"]`, and strict argument and payload schemas for both event definitions. Use deterministic identity from the authenticated principal, callback URL, event name, canonical arguments, and installation binding. Repeated subscriptions upsert rather than duplicate; renewed subscriptions preserve their original creation time unless reactivated after expiry.
+Preserve `events/list`, `events/subscribe`, and `events/unsubscribe` on the authenticated MCP endpoint. Advertise `capabilities.events`, `delivery: ["webhook"]`, and strict argument and payload schemas for both event definitions. Use deterministic identity from the authenticated principal, callback URL, event name, canonical arguments, and installation binding. Repeated subscriptions upsert rather than duplicate; renewed subscriptions preserve their original creation time unless reactivated after expiry. Refresh must never overwrite an existing row's bot or Telegram-owner binding.
 
 Retain a 72-hour default/maximum lifetime, honor shorter positive requested lifetimes, and grant a finite lifetime for `ttlMs: null`. Enforce expiry on reads. Refresh is driven by the native client; Dotagram needs no renewal scheduler.
 
@@ -240,7 +240,7 @@ Validate signing secrets and exact HTTPS callback origins. Verify callbacks with
 
 Preserve SlackDot's operator-verified exact-origin callback policy, redirect rejection, and public-destination restrictions. Do not expand it to arbitrary callback destinations or claim general DNS pinning that Worker fetch cannot establish. Verify the actual native callback origin during integration testing.
 
-Unsubscribe is owner-scoped and idempotent, and works without a live Telegram lookup. Support canonical event/arguments/destination removal; an ID form may be retained as a small compatibility convenience. Remove subscriptions when authorization is revoked or the installation binding is no longer valid. Return `cursor: null` and no replay claims throughout.
+Unsubscribe is owner-scoped and idempotent, and works without current Telegram credentials or a live Telegram lookup. Canonical unsubscribe matches stored rows by authenticated principal, event name, canonical arguments, and canonical callback URL across installation bindings; it must not derive only an ID using the current bot/owner configuration. Delete all matching rows for that principal so an old binding remains removable after configuration changes. An ID form may be retained as a small compatibility convenience. Remove subscriptions when authorization is revoked or the installation binding is no longer valid. Return `cursor: null` and no replay claims throughout.
 
 OpenAI's supported webhook profile governs discovery, challenge signing, renewal, and callback receipt; it takes precedence over incompatible experimental Events drafts. [OpenAI MCP Events](https://developers.openai.com/plugins/build/mcp-events)
 
@@ -347,15 +347,15 @@ There is no deployment in the current documentation task. Future installation fo
 
 Use synthetic fixtures. Before deployment, test and type-check the changed implementation and build through the supported Sites tooling. Tests should verify behavior and security properties rather than mirror implementation details.
 
-- Ingress authentication, malformed/oversized input, unknown fields, Unicode text boundaries, and rejection of every unsupported sender/chat/context.
+- Ingress authentication, malformed/oversized input, Unicode text boundaries, and rejection of every unsupported sender/chat/context. Extra Telegram fields are accepted but excluded from normalized payloads; unknown update variants are acknowledged without delivery or storage.
 - No foreground callback/API wait; background registration is required before success. No work escapes its shared deadline.
 - New/edit payloads, full-text preservation, reply-ID-only projection, stable event IDs, duplicate updates, distinct edits, and out-of-order updates.
-- Strict agreement between advertised schemas and runtime validation, SDK protocol handling, five tools, two events, and absence of Slack catalog entries.
-- Subscription idempotency, independent fanout, refresh, expiry, canonical unsubscribe, secret rotation, binding changes, owner isolation, and callback policy/challenge failures.
+- Strict agreement between advertised schemas and runtime validation, rejection of unknown MCP tool/subscription arguments, SDK protocol handling, five tools, two events, and absence of Slack catalog entries.
+- Subscription idempotency, independent fanout, refresh, expiry, canonical unsubscribe across installation bindings without Telegram credentials, secret rotation, immutable binding on refresh, owner isolation, and callback policy/challenge failures.
 - Simultaneous claims, abandoned/failed claims, stale-token fencing, fixed 25-hour expiry, reclaim boundaries, bounded cleanup, storage failures, and key changes.
 - Success, transient recovery, retry exhaustion, permanent failure, long retry delays, cancellation, interruption, and success-record failures.
 - One-shot typing after confirmed new-message delivery only; indicator failure cannot cause redelivery. Failure replies obey success/cancellation/suppression rules.
-- Fixed-destination writes, tampered/cross-owner/cross-bot references, incoming-message deletion attempts, missing targets, and ambiguous write outcomes without automatic resend.
+- Fixed-destination writes, tampered/cross-owner/cross-bot references, incoming-message deletion attempts, missing targets, and ambiguous write outcomes without automatic resend. Telegram rejection of a write to a blocked bot conversation must not mutate subscriptions.
 - D1 schema and stored values contain only permitted data. Logs, responses, fixtures, and build artifacts contain no real secrets or message content.
 
 ## 14. Compatibility checks and hosted acceptance
@@ -384,7 +384,7 @@ A failure must identify the unsupported capability and its practical effect. Do 
 - Confirm actual new and edited owner text events arrive with correct identities, text, occurrence times, and reply relationship. Test rapid messages and edits without promising ordering or automatic context assembly.
 - Verify the Dot can send, reply, edit, delete, set a reaction, and clear a reaction on an isolated owner-approved fixture. Verify signed references reject tampering and cannot authorize deletion of an owner-authored message.
 - Verify non-owner private messages and group/supergroup/channel updates never produce callbacks, tools cannot redirect writes, and bot output does not produce a response loop.
-- Verify owner block handling and bot credential/configuration mismatch fail closed, without inventing a replay or automatic subscription restoration path.
+- Verify a Telegram write rejection while the bot is blocked is reported accurately and leaves subscriptions unchanged. Verify bot credential/configuration mismatch fails closed and canonical unsubscribe can remove subscriptions belonging to a previous installation binding.
 - Verify duplicate successful ingress is suppressed per subscription, simultaneous ingress has one claim winner, and separate subscriptions retain independent behavior. Use synthetic time control for 25-hour expiry rather than waiting in production.
 - Confirm redeployment preserves valid subscriptions and the stable key; routine redeployment does not discard pending Telegram updates.
 - Verify user-visible failures are accurate about uncertainty and that no success indicator or failure reply is mistaken for the Dot's completion.
