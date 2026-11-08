@@ -37,8 +37,8 @@ When handing off, provide the actual link, exact action, expected result, and pe
 | Phase | Completion evidence |
 | --- | --- |
 | 1. Deploy the application | Successful deployment, health, genuine signed-in Site identity |
-| 2. Establish owner authorization | Owner ID applied; identity boundary checked; verification guard applied |
-| 3. Configure bot token and stable secrets | Required preliminary settings saved and deployed |
+| 2. Establish owner authorization | Owner ID applied; bootstrap identity/dispatch checks passed; verification guard applied |
+| 3. Configure bot token and stable secrets | Preliminary settings deployed; owner inspection succeeds and post-enable unauthorized action checks pass |
 | 4. Inspect and verify Telegram owner | Correct bot, explicit human confirmation, final bot/owner settings applied |
 | 5. Register or preserve webhook | Registration/public settings verified without discarding updates or replacing another webhook |
 | 6. Publish and connect MCP | Same Site's generated plugin connected; owner tools usable |
@@ -64,12 +64,12 @@ A healthy Site is not Telegram readiness. Saved settings are not applied setting
 **Inputs:** the genuine Site identity and a successful initial deployment.
 
 1. Through Sites, set `OWNER_USER_ID` to the observed identity. For a fresh installation, start `SITES_IDENTITY_VERIFIED=false`. Preserve an already-established binding/guard on resume. Deploy changes and record the applied revision.
-2. Check the real signed-in setup page and unauthorized boundaries. Anonymous visitors may be redirected to sign-in. Forged owner headers must not establish an owner session. A genuinely signed-in non-owner may see their own bootstrap identity, but not owner configuration or action results. Test through the supported framework/UI path; there are no custom setup HTTP endpoints.
-3. After the required boundary checks, set `SITES_IDENTITY_VERIFIED=true` and deploy. Before the token is configured, actions may report missing Telegram configuration; that is not failed owner authentication. After phase 3, also verify successful authorized inspection so an always-rejecting application is not counted as correct.
+2. Check the real signed-in setup identity and Sites dispatch boundary. Anonymous visitors may be redirected to sign-in. Forged owner headers must not establish an owner session. A genuinely signed-in non-owner may see their own bootstrap identity, but not owner configuration. With the guard false, all setup actions are disabled: their rejection does not yet prove that action authorization distinguishes owners from non-owners.
+3. After those bootstrap checks, set `SITES_IDENTITY_VERIFIED=true` and deploy. Before the token is configured, an authorized action may report missing Telegram configuration. Phase 3 must pair successful owner inspection with post-enable unauthorized action checks; do not count blanket pre-enable denial as completion of those tests.
 
 Use Sites authentication and the framework's built-in server-action protections. Do not introduce custom origin verification, extra origin environment settings, bearer-token bypasses, or a parallel authentication flow. If a required identity check cannot be performed, record the exact gap and hand off that step; do not silently treat synthetic headers as a genuine second account.
 
-**Complete when:** the correct Site owner and verified-boundary setting are applied, with evidence of the required boundary checks. On resume, do not undo established settings to simulate a fresh install.
+**Complete when:** the correct Site owner and verified-boundary setting are applied, with bootstrap identity/dispatch evidence recorded. Post-enable action authorization remains a phase 3 requirement. On resume, do not undo established settings to simulate a fresh install.
 
 ## 3. Configure the bot token and stable settings
 
@@ -94,7 +94,9 @@ The existing reviewed callback policy uses `https://connectors.api.openai.com`. 
 
 4. Deploy the saved source version to apply the preliminary settings and record its environment revision. Keep MCP disabled for a fresh installation. The owner may now invoke **Inspect bot** even though Telegram bot-info/owner settings have not yet been derived.
 
-**Complete when:** the six preliminary settings are applied and setup can inspect the saved token inside the Worker. No local credential executor, Python command, token readback, or secret-transfer artifact is part of this phase.
+5. With the guard enabled and these settings applied, invoke **Inspect bot** as the genuine owner and verify success. Repeat anonymous/forged-header/signed-in-non-owner checks against the framework setup actions, not just the bootstrap page. Unauthorized actions must reject before Telegram calls and expose no configuration. The non-owner page may still display that visitor's own identity. Record these results separately from phase 2; earlier blanket rejection does not satisfy this check. If a required check is unavailable, report it pending and hand off that step rather than marking the boundary verified.
+
+**Complete when:** the six preliminary settings are applied, owner inspection succeeds, and post-enable unauthorized action checks pass. No local credential executor, Python command, token readback, or secret-transfer artifact is part of this phase.
 
 ## 4. Inspect the bot and explicitly verify the human owner
 
