@@ -1,6 +1,6 @@
 # Dotagram implementation plan
 
-Status: tasks 1–8 implemented and locally verified; task 9 pending live installation and native acceptance. See [verification record](../docs/verification.md).
+Status: tasks 1â€“8 implemented and locally verified; task 9 pending live installation and native acceptance. See [verification record](../docs/verification.md).
 
 Last updated: 2026-11-07
 
@@ -41,12 +41,12 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 | 3 | grammY client, Telegram contracts, tools service, and signed references | 2 | Complete locally |
 | 4 | Subscription lifecycle, callback transport, and opaque deduplication | 2, event schemas from 3 | Complete locally |
 | 5 | Authenticated ingress, bounded delivery, and feedback | 3, 4 | Complete locally |
-| 6 | Complete MCP catalog and minimal setup experience | 2–5 | Complete locally |
+| 6 | Complete MCP catalog and minimal setup experience | 2â€“5 | Complete locally |
 | 7 | Installation instructions and plugin reference | 6 | Complete locally |
 | 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Complete locally |
 | 9 | Sites installation and native acceptance | 8; installation access and human handoffs | Pending |
 
-### Task 1 — Prepare the application foundation
+### Task 1 â€” Prepare the application foundation
 
 **Files:** package manifest/lockfile, TypeScript and test configuration, Sites/Vite integration, Worker entry point, framework files, `.openai/hosting.json`, `.gitignore`, and required licensing notices.
 
@@ -62,7 +62,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the new checkout has the intended reusable foundation and dependency set, with no reference installation state or Slack runtime dependency.
 
-### Task 2 — Implement configuration, authorization, crypto, and storage
+### Task 2 â€” Implement configuration, authorization, crypto, and storage
 
 **Files:** `lib/runtime/config.ts`, `lib/runtime/crypto.ts`, `app/chatgpt-auth.ts`, `db/schema.ts`, `db/index.ts`, `lib/storage.ts`, fresh `drizzle/` migrations, `.env.example`, and test database helpers.
 
@@ -79,7 +79,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** shared runtime services enforce the owner boundary and the database can contain only the permitted application records.
 
-### Task 3 — Implement the Telegram adapter and tool operations
+### Task 3 â€” Implement the Telegram adapter and tool operations
 
 **Files:** `lib/telegram/normalize.ts`, `lib/telegram/service.ts`, `lib/telegram/message-reference.ts`, an internal client factory if needed, and focused Telegram contract/write tests.
 
@@ -96,7 +96,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the service implements all five tool operations' underlying behavior, with synthetic transport tests and no stored message or write state.
 
-### Task 4 — Adapt subscription lifecycle and deduplication
+### Task 4 â€” Adapt subscription lifecycle and deduplication
 
 **Files:** `lib/events/subscriptions.ts`, `lib/events/callback.ts`, `lib/events/dedup.ts`, relevant storage queries, and subscription/deduplication tests.
 
@@ -112,7 +112,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** lifecycle and deduplication operate on the new schema with the specification's privacy and concurrency properties.
 
-### Task 5 — Connect authenticated ingress to bounded delivery
+### Task 5 â€” Connect authenticated ingress to bounded delivery
 
 **Files:** `lib/telegram/receiver.ts`, `lib/telegram/feedback.ts`, `lib/events/delivery.ts`, `lib/events/budget.ts`, `lib/runtime/router.ts`, `worker/index.ts`, and ingress/delivery tests.
 
@@ -129,7 +129,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** real application routes use the bounded in-memory path and the Worker entry point supplies the execution context. No manual delivery route, timer service, or payload queue exists.
 
-### Task 6 — Expose MCP tools/events and the minimal setup view
+### Task 6 â€” Expose MCP tools/events and the minimal setup view
 
 **Files:** `lib/mcp/server.ts`, `app/page.tsx`, `app/setup/page.tsx`, `app/layout.tsx`, minimal styles/assets, and MCP/authentication tests.
 
@@ -144,7 +144,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the complete intended catalog and setup experience are integrated with the actual services and storage, without placeholder tool handlers.
 
-### Task 7 — Write installation and usage documentation
+### Task 7 â€” Write installation and usage documentation
 
 **Files:** `README.md`, `AGENTS.md`, `docs/install.md`, `plugin/skills/use-dotagram/SKILL.md`, and configuration examples.
 
@@ -161,11 +161,11 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** an installer and the intended Dot have an accurate, ordered procedure and reference for the finished application.
 
-### Task 8 — Complete integrated local verification
+### Task 8 â€” Complete integrated local verification
 
 **Files:** focused unit/protocol suites, `tests/support/`, synthetic Worker acceptance fixtures, build/check scripts as needed, and this plan's verification record.
 
-1. Run the relevant focused tests during tasks 2–6. Once integrated, run the full test suite and TypeScript check for the exact source being evaluated, using the retained `npm test` and `npm run typecheck` scripts.
+1. Run the relevant focused tests during tasks 2â€“6. Once integrated, run the full test suite and TypeScript check for the exact source being evaluated, using the retained `npm test` and `npm run typecheck` scripts.
 2. Build with the supported Sites build helper and the actual deployment configuration. Validate the generated Worker, not only Node-based unit tests.
 3. Adapt the SlackDot synthetic Worker harness for ingress, all five tools, both events, callback lifecycle, and bounded delivery. Keep injected transports/test controls outside production routes and production bundles.
 4. Verify D1 migrations on a fresh database and inspect the resulting tables/columns. Test cleanup and retention using synthetic time; do not wait 25 or 72 hours for boundary tests.
@@ -175,7 +175,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the complete application passes local tests, type checking, the supported Sites build, and synthetic Worker verification. Any remaining hosted checks stay explicitly pending.
 
-### Task 9 — Install and perform normal hosted acceptance
+### Task 9 â€” Install and perform normal hosted acceptance
 
 **Environment:** the actual Dotagram Site, its integrated D1 database, the owner's Telegram bot, the generated Site plugin, and the intended Dot's native ChatGPT context.
 
@@ -205,7 +205,7 @@ This task is the eventual installation/acceptance work, not authorization to dep
 | Opaque fixed 25-hour deduplication and 45-second claims | 2, 4, 5 | Schema inspection, concurrency/fencing/boundary tests, duplicate ingress |
 | Bounded in-memory delivery and honest failure behavior | 5 | Retry/deadline/interruption Worker scenarios and real native round trip |
 | One-shot typing and no block-triggered subscription deletion | 3, 5 | Feedback ordering/failure tests and Telegram operation results |
-| No payload/history/feedback/write retention | 2–8 | Storage assertions, schema/import/log checks, synthetic fixtures |
+| No payload/history/feedback/write retention | 2â€“8 | Storage assertions, schema/import/log checks, synthetic fixtures |
 | Installation and intended-Dot handoff | 7, 9 | Ordered guide, applied configuration, actual plugin and automation acceptance |
 
 The [specification](specification.md) remains authoritative for detailed schemas, timings, and limitations. This map connects requirements to work; it does not replace or weaken them.
@@ -214,10 +214,10 @@ The [specification](specification.md) remains authoritative for detailed schemas
 
 Update the task statuses as work actually completes. Keep local implementation completion and hosted acceptance separate, and do not mark pending checks as passed based on SlackDot's historical results.
 
-- [x] Tasks 1–7: complete application and documentation implemented.
+- [x] Tasks 1â€“7: complete application and documentation implemented.
 - [x] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
 - [ ] Task 9: installation and native hosted acceptance completed, with any limitations stated.
 - [x] No additional application tables, Slack dependencies, background services, or unrequested features introduced.
-- [x] No live owner configuration, messages, or automation modified; test data is synthetic and local.
+- [x] Local fixtures use synthetic data. Subsequent authorized installation and owner-reported native acceptance are recorded separately.
 
-Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. No live Site, Telegram webhook, plugin, or native subscription has been created by the local implementation work.
+Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. Authorized installation subsequently created the Site/webhook/plugin, and the intended Dot established native subscriptions; remaining hosted acceptance is tracked in the verification record.

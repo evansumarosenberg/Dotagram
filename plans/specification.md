@@ -1,6 +1,6 @@
 # Dotagram specification
 
-Status: design specification; implementation has not begun. All Dotagram compatibility checks below are pending.
+Status: implemented and deployed; authoritative design requirements. Completed and pending acceptance evidence is tracked in docs/verification.md.
 
 Last updated: 2026-11-07
 
@@ -360,7 +360,7 @@ Use synthetic fixtures. Before deployment, test and type-check the changed imple
 
 ## 14. Compatibility checks and hosted acceptance
 
-All rows are pending. Record exact dependency versions, tested source revision, environment, observed results, and limitations when these checks are performed. Do not copy SlackDot's pass status.
+Track each row in docs/verification.md with exact dependency versions, tested source revision, environment, observed results, and limitations. Do not copy SlackDot's pass status.
 
 ### Platform integration checks
 
