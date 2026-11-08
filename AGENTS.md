@@ -11,3 +11,5 @@ Read `plans/specification.md` and `plans/implementation-plan.md` before changing
 - Run focused tests, full `npm test`, `npm run typecheck`, and the supported Sites build for runtime changes. Run affected synthetic built-Worker scenarios. Keep test transports and controls out of production bundles.
 - Use synthetic content only. Do not log raw grammY exceptions, Telegram URLs, callback secrets/URLs, or message content. Pass installation secrets only through supported secure input/execution, never chat or command arguments.
 - Separate local evidence from native hosted acceptance in `docs/verification.md`. SlackDot establishes architectural feasibility; there is no separate compatibility prototype or feasibility gate.
+
+- The 2026-11-08 setup revision is specified, not yet implemented. Implement only the owner-authenticated actions in specification section 11; do not add Python/local credential handoffs, environment editors, stored enrollment state, or installation MCP tools. Preserve the owner-supplied automation wording verbatim.

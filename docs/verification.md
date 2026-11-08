@@ -44,7 +44,7 @@ The first Sites installer attempt required a lockfile. Generated it with npm's p
 | Duplicate | Repeated ingress after success suppressed; no second typing action |
 | Notice failure | Three failed callbacks; one rejected notice, no notice retry |
 
-Synthetic ingress acknowledgment was approximately 5Ã¢â‚¬â€œ7 ms in the observed runs. This is local timing evidence, not a production latency promise. Callback/feedback work stayed within the asserted overall bound. The mock external service may continue its own work after a request is aborted; Dotagram cancels its network request and does not wait past the deadline.
+Synthetic ingress acknowledgment was approximately 5–7 ms in the observed runs. This is local timing evidence, not a production latency promise. Callback/feedback work stayed within the asserted overall bound. The mock external service may continue its own work after a request is aborted; Dotagram cancels its network request and does not wait past the deadline.
 
 Unit tests separately cover fixed 25-hour deduplication, 45-second claims, concurrent claim winners, stale-token fencing, fixed expiry on reclaim, boundary cleanup, encrypted key rotation/expiry, canonical unsubscribe across bindings without Telegram credentials, authorization, invalid IDs/keys, full Unicode text, unknown Telegram fields, excluded contexts, signed reference tampering/binding, blocked writes, ambiguous writes, missing replies, claim/finalization failures, cancellation, and transport/body aborts.
 
@@ -66,11 +66,11 @@ Same Site deployed with environment revision 5. Genuine owner setup access and b
 
 MCP publication version 2 succeeded on the same Site with environment revision 5 preserved. Full 56-test suite, typecheck, supported Sites build, and rebuilt-Worker success scenario passed. The owner subsequently confirmed the actual owner-to-Dot round trip.
 
-## Native round-trip acceptance â€” owner reported
+## Native round-trip acceptance — owner reported
 
 The owner confirmed that the intended Dot received a test message sent to the Telegram bot and replied in Telegram. This is live end-to-end evidence for owner-message ingress, native event receipt, and an outbound Telegram response. It is user-observed evidence, not an installer-captured trace. No message text, message references, callback details, or write results were collected or retained. The active intended automation and subscriptions must be preserved. The remaining native checks above are not implied by this successful exchange.
 
-## Edited-message acceptance â€” owner reported
+## Edited-message acceptance — owner reported
 
 The owner confirmed that the intended Dot received an edited-message event and attempted a response. The owner subsequently identified the block as ChatGPT automatic approval review enforcing an unintended automation rule: one response per Telegram source message. The automation treated the already-answered source message as ineligible for a response to its edit. This was not a Dotagram duplicate rejection. The owner subsequently confirmed that both new-message and edited-message replies work under the corrected automation instructions. Native receipt and response are confirmed for both event types.
 
@@ -89,3 +89,7 @@ Unchanged saved version 2 was redeployed successfully as appgdep_6aeff9d265d4819
 Passed: two distinct outbound responses to one incoming event, both explicitly linked to the source message; bot-message edit and deletion; reaction addition and removal; invalid and tampered signed-reference rejection without a reported mutation. The owner visually confirmed the edit and reaction. Four rapid new/edit/reply events arrived with distinct event/update IDs and the correct reply relationship. Out-of-order arrival was observed and is permitted. No bot-authored event or response loop was observed among the delivered test events; this is not proof about unseen events. The live connection reported the expected five tools and two event types, not negotiated protocol metadata.
 
 This completes the observable messaging acceptance, including post-redeployment delivery. Protocol negotiation and native subscription lifecycle remain explicitly unverified as detailed above. No message content, raw IDs, signed references, or callback secrets were copied into this record.
+
+## Setup revision status (2026-11-08)
+
+Owner-authenticated setup replaces the unapproved Python/custom credential workflow in the revised specification and plan. This is a documentation-only design change: no replacement route is implemented or deployed, no helper has yet been removed, and no acceptance result above establishes the new flow. Tasks 10-13 remain pending.

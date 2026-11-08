@@ -1,73 +1,40 @@
 # Install Dotagram
 
-Use the complete application in this repository. The installation agent may be Codex or ChatGPT Work; the intended ChatGPT Dot creates its own native automation. Follow the installed Sites skill for current source, dependency, build, secrets and publication tooling. No separate compatibility prototype is needed.
+Status: revised target procedure for specification section 11 (2026-11-08). The owner-authenticated actions below are not yet implemented or deployed. Do not follow these as available controls until implementation tasks 10-13 pass. Existing working installations remain in place; do not fall back to Python or custom secret handoffs.
 
-Keep a non-secret progress note containing the checkout/source revision, Site ID and URL, version/deployment IDs, applied environment revision, owner/bot IDs, plugin ID and current phase. Never store tokens, webhook or callback secrets, raw Telegram updates or message text. Resume the same Site and bot; do not recreate resources because a credential is masked or a session ended.
+The installation agent manages Sites settings and deployments through supported tools. The owner uses the authenticated setup page and Telegram. Tokens and webhook secrets remain in Sites/Worker execution; only non-secret results are shared with the installer. Preserve one Site, bot, database, plugin, stable keys, owner binding and intended automation. Keep non-secret progress identifiers, never message content or credentials.
 
-## 1. Initial Site and owner identity
+## 1. Site identity and setup authorization
 
-1. Preserve the repository's Sites/Vinext integration, lockfile, `d1: "DB"`, `r2: null`, and migrations. If `.openai/hosting.json` contains a real `project_id`, reuse it. Otherwise create one Site and immediately persist the returned ID. Keep `capabilities: []` initially.
-2. Run local tests/type checking and the supported Sites build. Package and publish the exact source through the Sites workflow. The actual installation needs **public HTTP access** for Telegram ingress; protected routes still enforce the Site owner. Set public access through the supported access controls as part of this installation, not by weakening application guards.
-3. Confirm `/health` responds with `service: "Dotagram"`. Open the exact Site's `/setup` in the owner's genuine signed-in browser. Read the displayed Site-scoped identity and configure it as `OWNER_USER_ID`. Never substitute an account ID, email, Telegram ID, or another Site's identity.
-4. If the installer cannot access that authenticated browser, ask the owner to sign in at the exact `/setup` URL and return only the displayed non-secret identity. Bootstrap reveals each visitor's own identity but no configuration.
+For a new installation, deploy the complete application publicly with D1 and MCP publication disabled. Preserve Sites sign-in and protected-route guards. The owner signs in at `/setup` and shares only their displayed Site-scoped identity. The installer saves `OWNER_USER_ID` and the exact canonical HTTPS Site origin as `SITE_ORIGIN` through Sites and deploys.
 
-MCP and eligible Telegram ingress intentionally fail closed before configuration. A healthy landing page is not evidence of readiness. Do not enable MCP publication yet.
+Verify genuine owner access and anonymous/forged-header/signed-in-non-owner rejection. The bootstrap identity page works before Telegram is configured. Setup API actions remain disabled until `SITES_IDENTITY_VERIFIED=true` is saved and deployed after boundary verification. Missing required access/evidence is a specific pending step, not permission to invent a credential workaround.
 
-## 2. Bot and explicit human-owner verification
+## 2. Bot token and stable settings
 
-Have the owner create a bot in [BotFather](https://t.me/BotFather), disable group joining, and leave inline, business and private topic features unused. Have them save `TELEGRAM_BOT_TOKEN` directly as a secret in this Site's environment. Do not request it in chat. Saving it does not guarantee an installer can read it back: Sites secret reads may be masked.
+The owner creates a bot in BotFather, disables group joining, leaves unsupported features unused, and saves `TELEGRAM_BOT_TOKEN` directly in Sites secrets. The installer saves `SUBSCRIPTION_ENCRYPTION_KEY` (32 random bytes, standard base64), `TELEGRAM_WEBHOOK_SECRET` (32 random bytes, base64url), and independently verified `CALLBACK_ALLOWED_ORIGINS` through supported Sites tools. Preserve existing masked values. Deploy to apply these settings.
 
-Obtain a verified numeric human-owner ID through a supported secure execution session. A concrete installation-only procedure is:
+No token readback is needed. There is no Python command, secret entry on `/setup`, local bootstrap JSON, or process-environment transfer. The setup server uses the deployed token; setup responses never return it. Settings remain managed in Sites, not by the Worker.
 
-1. Before registering this new bot's webhook, generate a random non-secret nonce and give it to the owner. The owner opens the bot's private chat in their own Telegram account and sends that exact nonce. This also establishes the conversation prerequisite.
-2. Using the bot token through hidden input or a supported credential executor, call Telegram `getMe` and a single `getUpdates` request (`timeout: 0`, `allowed_updates: ["message"]`). Do not set an offset to acknowledge/discard pending updates. Reject redirects, bound the response, and hold it only in memory. This is an installation read, not a deployed polling loop.
-3. Find the unique nonce-bearing message with `chat.type: "private"`, a non-bot sender, and equal `from.id`/`chat.id`. If absent or ambiguous, do not bind anything. Independently confirm with the owner that this is the message they just sent from their intended account. Show only that numeric ID and whether the nonce matched, never the raw update or profile. Set `TELEGRAM_OWNER_USER_ID` only after explicit confirmation. The first message or an unverified username must never choose the owner.
-4. For an existing installation, preserve its verified ID. `getUpdates` cannot be used while a webhook is registered; do not remove a working webhook just to repeat enrollment. If verification cannot be established securely, stop this phase and obtain a verified ID from the owner's authenticated Telegram account with an explicit secure handoff.
+## 3. Inspect and explicitly verify the human owner
 
-The nonce is not a runtime pairing feature or an authorization secret. No nonce, pending enrollment, or update is stored by Dotagram. The owner explicitly approves the numeric ID; `getMe.id` is the bot ID and must not be used for the human owner.
+The owner invokes **Inspect bot** on `/setup`. The Worker checks bot identity and existing webhook state. If this is an existing verified installation, preserve its configured owner and bot information; skip enrollment. Never remove a webhook to repeat verification.
 
-## 3. Secure configuration
+For a fresh bot with no webhook and no configured Telegram owner:
 
-Direct installation API requests use `https://api.telegram.org/bot<TOKEN>/<METHOD>`. That is a request shape, not a URL to paste into a browser or command argument. The executor builds it in memory with the token, disables redirects, and sanitizes errors because Telegram embeds credentials in URLs. Never expose raw HTTP exceptions. If no supported secure execution/input path exists, preserve phase 1 and hand off this exact credential step; do not add a public setup/debug endpoint or weaken guards.
+1. The page generates a fresh nonce. The owner sends it to the displayed bot from their intended private Telegram account.
+2. The owner invokes **Verify owner** once. The Worker makes one bounded update read and returns only a matching candidate numeric ID and validated bot information. It does not acknowledge/discard pending updates or change update filters. No-match, multiple matches, full-page or existing-webhook conflicts stop this step; there is no automatic retry/pagination.
+3. The owner explicitly confirms the candidate is their intended account. Share only the confirmed ID and allowlisted bot configuration with the installer. The installer saves `TELEGRAM_OWNER_USER_ID` and `TELEGRAM_BOT_INFO` through Sites and deploys them. The application never binds a candidate automatically.
 
-Derive `TELEGRAM_BOT_INFO` from successful `getMe`, retaining the validated ID, bot flag, first name, username and documented capability flags. The installed `botInfoSchema` strips unknown fields and defaults absent optional capability flags to false. Ensure it identifies the same token's bot. Call the API directly for bootstrap; `TelegramService` deliberately requires the expected identity first.
+Nonce and candidate UI state are memory-only. Refreshing the page discards unfinished verification. A reused bot with incompatible pending-update/filter state needs a separately agreed recovery decision; do not clear updates or add a script workaround.
 
-Configure through Sites:
+## 4. Register or inspect the webhook
 
-| Key | Value |
-| --- | --- |
-| `TELEGRAM_BOT_TOKEN` | Owner-entered bot token, secret |
-| `TELEGRAM_OWNER_USER_ID` | Explicitly verified positive numeric human ID as a decimal string |
-| `TELEGRAM_BOT_INFO` | Validated `getMe` object as JSON |
-| `TELEGRAM_WEBHOOK_SECRET` | Agent-generated 32 random bytes as base64url, secret |
-| `OWNER_USER_ID` | Genuine Site-scoped owner identity |
-| `SUBSCRIPTION_ENCRYPTION_KEY` | Agent-generated 32 random bytes as standard base64, secret |
-| `CALLBACK_ALLOWED_ORIGINS` | Independently verified exact OpenAI callback origins, comma-separated; no wildcard or caller-selected origins |
-| `SITES_IDENTITY_VERIFIED` | Initially `false`; enable after the identity checks below |
+With full configuration deployed, the owner invokes **Register webhook** on `/setup`. The server derives the endpoint from `SITE_ORIGIN`, uses the saved webhook secret, and fixes the options to message/edited_message, one connection and preservation of pending updates. No credential or target URL is supplied by the browser.
 
-`DB` is the Sites D1 binding, not an environment string. Preserve keys on resume and redeployment; a masked value is not missing. Root-key changes invalidate references and dedup identity and cannot preserve the existing suppression window.
+No existing webhook: one registration attempt, then inspection. Matching webhook: report already configured without rewriting. Different destination or incompatible settings: preserve it and stop with a conflict. An uncertain write is not automatically retried; explicitly inspect before deciding next steps. Inspection cannot read back the secret or prove delivery. Verify real authenticated ingress and the later Dot round trip separately.
 
-Deploy a saved source version to apply environment changes. Verify public health and rejection of anonymous and forged-identity requests. An anonymous request supplying `oai-authenticated-user-id` must not become authenticated: Sites dispatch must strip/replace these headers. In particular, forged `/setup` headers must not reveal the supplied fake identity or configuration. An unpublished `/mcp` may return a platform 404; this alone does not prove its eventual owner boundary.
-
-After the genuine owner sign-in and dispatch checks pass, set `SITES_IDENTITY_VERIFIED=true` and redeploy. Confirm the owner's authenticated `/setup` shows expected bot and human IDs, and a signed-in non-owner sees only their own bootstrap identity. Only that owner may inspect configuration presence or connection details. Never count an always-failing owner path as a successful authorization test.
-
-## 4. Telegram webhook
-
-Through secure credential execution, call `setWebhook` with:
-
-```json
-{
-  "url": "<exact-site-origin>/telegram/webhook",
-  "secret_token": "<securely supplied TELEGRAM_WEBHOOK_SECRET>",
-  "allowed_updates": ["message", "edited_message"],
-  "max_connections": 1,
-  "drop_pending_updates": false
-}
-```
-
-Preserve pending updates on ordinary redeployments and secret rotations. Do not silently discard pre-installation messages either. The nonce message may arrive after registration; without a matching subscription it produces no callback or reply.
-
-Inspect `getWebhookInfo` privately for the exact URL and update allowlist and a successful API result. Do not export error descriptions or payloads. Have the owner send a fresh text and verify authenticated ingress. Registration success alone does not establish end-to-end delivery. Wrong webhook secrets must fail; unsupported users and contexts must be ignored. A connection limit of one limits load but does not guarantee event ordering.
+On upgrade, preserve all existing keys, settings and subscriptions. Add `SITE_ORIGIN` only if missing; do not disable existing MCP or re-enroll an already verified owner. A safe existing-installation acceptance uses inspection and the no-write already-configured path.
 
 ## 5. Publish MCP and hand off to the intended Dot
 
@@ -89,7 +56,7 @@ Verify a real owner message → native event → Dot response → Telegram round
 
 Use synthetic tests for outages, interruption, simultaneous ingress, 25-hour expiry, callback retries, blocking errors and excluded contexts where live tests would require unrelated account changes. Label those results synthetic. Confirm schema has only the two application tables and no raw data logging. Confirm redeployment preserves keys/subscriptions. Clean up only acceptance fixtures and test subscriptions; preserve the intended automation.
 
-Record evidence and remaining checks in `docs/verification.md`. Local tests do not substitute for native signed callback challenge, actual owner access, or the intended-Dot round trip. If a human sign-in, secure credential executor, or native automation tool is unavailable, preserve completed work and hand off that phase with exact non-secret next steps.
+Record evidence and remaining checks in `docs/verification.md`. Local tests do not substitute for native signed callback challenge, actual owner access, or the intended-Dot round trip. If owner browser access, Sites settings controls, or native automation controls are unavailable, preserve completed work and hand off that exact step; do not substitute a local credential workflow.
 
 The owner can cancel monitoring with MCP unsubscribe. Blocking/unblocking Telegram does not delete subscriptions. A blocked write reports an operation error. Subscription expiry gaps and acknowledged Worker interruption are unrecoverable: no payload is retained for replay. Dedup rows expire after a fixed 25 hours; bounded request-driven cleanup may leave expired metadata on an idle Site until later activity.
 

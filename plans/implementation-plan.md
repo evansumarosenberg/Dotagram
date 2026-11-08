@@ -1,8 +1,8 @@
 # Dotagram implementation plan
 
-Status: tasks 1â€“8 implemented and locally verified; task 9 pending live installation and native acceptance. See [verification record](../docs/verification.md).
+Status: original runtime implemented and deployed with qualified native acceptance; owner-authenticated setup revision planned, not implemented. See [verification record](../docs/verification.md).
 
-Last updated: 2026-11-07
+Last updated: 2026-11-08
 
 Source of truth: [Dotagram specification](specification.md).
 
@@ -12,7 +12,7 @@ Implement the reviewed specification by adapting the current SlackDot applicatio
 
 SlackDot already demonstrates MCP Events delivery through ChatGPT Sites. Build the intended Dotagram application directly. There is no separate compatibility prototype or feasibility phase; platform checks are ordinary verification of the resulting application.
 
-This plan was written before implementation. The implementation task has now completed the local application and validation work described below. Live installation remains a separate, pending acceptance phase.
+This plan was written before implementation. The implementation task has now completed the local application and validation work described below. The existing installation has passed messaging acceptance; outstanding checks are recorded separately. The 2026-11-08 setup revision below has not been implemented.
 
 ## 2. Constraints that apply to every task
 
@@ -25,7 +25,7 @@ This plan was written before implementation. The implementation task has now com
 - Keep Telegram blocking separate from MCP subscription cancellation. Do not register `my_chat_member` or delete subscriptions on blocked-message write failures.
 - Tolerate and discard unknown Telegram fields while keeping MCP tool and subscription arguments strict.
 - Preserve canonical unsubscribe across installation bindings and immutable binding on subscription refresh.
-- Do not add a queue, scheduler, polling loop, external service, configuration GUI, or diagnostic dashboard to address accepted delivery limitations.
+- Do not add a queue, scheduler, polling loop, external service, environment editor, or diagnostic dashboard. The only setup controls permitted are the three owner-authenticated installation actions specified in section 11; they do not address delivery recovery.
 - Keep the SlackDot reference checkout unchanged. Do not copy its credentials, deployment identity, runtime data, historical acceptance status, or superseded operational schema.
 
 If implementation exposes a conflict with these constraints, record the concrete conflict and resolve it against the specification. Do not silently change product scope or infrastructure.
@@ -41,12 +41,16 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 | 3 | grammY client, Telegram contracts, tools service, and signed references | 2 | Complete locally |
 | 4 | Subscription lifecycle, callback transport, and opaque deduplication | 2, event schemas from 3 | Complete locally |
 | 5 | Authenticated ingress, bounded delivery, and feedback | 3, 4 | Complete locally |
-| 6 | Complete MCP catalog and minimal setup experience | 2â€“5 | Complete locally |
+| 6 | Complete MCP catalog and minimal setup experience | 2–5 | Complete locally |
 | 7 | Installation instructions and plugin reference | 6 | Complete locally |
 | 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Complete locally |
-| 9 | Sites installation and native acceptance | 8; installation access and human handoffs | Pending |
+| 9 | Original Sites installation and native acceptance | 8 | Messaging passed; remaining checks recorded |
+| 10 | Setup authorization and bootstrap API client | Revised specification section 11 | Planned |
+| 11 | Fixed setup actions and browser flow | 10 | Planned |
+| 12 | Retire Python workflow and reconcile documentation | 11 | Planned |
+| 13 | Replacement-flow validation and existing-Site upgrade | 10-12 | Planned |
 
-### Task 1 â€” Prepare the application foundation
+### Task 1 — Prepare the application foundation
 
 **Files:** package manifest/lockfile, TypeScript and test configuration, Sites/Vite integration, Worker entry point, framework files, `.openai/hosting.json`, `.gitignore`, and required licensing notices.
 
@@ -62,7 +66,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the new checkout has the intended reusable foundation and dependency set, with no reference installation state or Slack runtime dependency.
 
-### Task 2 â€” Implement configuration, authorization, crypto, and storage
+### Task 2 — Implement configuration, authorization, crypto, and storage
 
 **Files:** `lib/runtime/config.ts`, `lib/runtime/crypto.ts`, `app/chatgpt-auth.ts`, `db/schema.ts`, `db/index.ts`, `lib/storage.ts`, fresh `drizzle/` migrations, `.env.example`, and test database helpers.
 
@@ -79,7 +83,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** shared runtime services enforce the owner boundary and the database can contain only the permitted application records.
 
-### Task 3 â€” Implement the Telegram adapter and tool operations
+### Task 3 — Implement the Telegram adapter and tool operations
 
 **Files:** `lib/telegram/normalize.ts`, `lib/telegram/service.ts`, `lib/telegram/message-reference.ts`, an internal client factory if needed, and focused Telegram contract/write tests.
 
@@ -96,7 +100,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the service implements all five tool operations' underlying behavior, with synthetic transport tests and no stored message or write state.
 
-### Task 4 â€” Adapt subscription lifecycle and deduplication
+### Task 4 — Adapt subscription lifecycle and deduplication
 
 **Files:** `lib/events/subscriptions.ts`, `lib/events/callback.ts`, `lib/events/dedup.ts`, relevant storage queries, and subscription/deduplication tests.
 
@@ -112,7 +116,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** lifecycle and deduplication operate on the new schema with the specification's privacy and concurrency properties.
 
-### Task 5 â€” Connect authenticated ingress to bounded delivery
+### Task 5 — Connect authenticated ingress to bounded delivery
 
 **Files:** `lib/telegram/receiver.ts`, `lib/telegram/feedback.ts`, `lib/events/delivery.ts`, `lib/events/budget.ts`, `lib/runtime/router.ts`, `worker/index.ts`, and ingress/delivery tests.
 
@@ -129,7 +133,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** real application routes use the bounded in-memory path and the Worker entry point supplies the execution context. No manual delivery route, timer service, or payload queue exists.
 
-### Task 6 â€” Expose MCP tools/events and the minimal setup view
+### Task 6 — Expose MCP tools/events and the minimal setup view
 
 **Files:** `lib/mcp/server.ts`, `app/page.tsx`, `app/setup/page.tsx`, `app/layout.tsx`, minimal styles/assets, and MCP/authentication tests.
 
@@ -144,7 +148,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the complete intended catalog and setup experience are integrated with the actual services and storage, without placeholder tool handlers.
 
-### Task 7 â€” Write installation and usage documentation
+### Task 7 — Write installation and usage documentation
 
 **Files:** `README.md`, `AGENTS.md`, `docs/install.md`, `plugin/skills/use-dotagram/SKILL.md`, and configuration examples.
 
@@ -161,11 +165,11 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** an installer and the intended Dot have an accurate, ordered procedure and reference for the finished application.
 
-### Task 8 â€” Complete integrated local verification
+### Task 8 — Complete integrated local verification
 
 **Files:** focused unit/protocol suites, `tests/support/`, synthetic Worker acceptance fixtures, build/check scripts as needed, and this plan's verification record.
 
-1. Run the relevant focused tests during tasks 2â€“6. Once integrated, run the full test suite and TypeScript check for the exact source being evaluated, using the retained `npm test` and `npm run typecheck` scripts.
+1. Run the relevant focused tests during tasks 2–6. Once integrated, run the full test suite and TypeScript check for the exact source being evaluated, using the retained `npm test` and `npm run typecheck` scripts.
 2. Build with the supported Sites build helper and the actual deployment configuration. Validate the generated Worker, not only Node-based unit tests.
 3. Adapt the SlackDot synthetic Worker harness for ingress, all five tools, both events, callback lifecycle, and bounded delivery. Keep injected transports/test controls outside production routes and production bundles.
 4. Verify D1 migrations on a fresh database and inspect the resulting tables/columns. Test cleanup and retention using synthetic time; do not wait 25 or 72 hours for boundary tests.
@@ -175,7 +179,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 **Complete when:** the complete application passes local tests, type checking, the supported Sites build, and synthetic Worker verification. Any remaining hosted checks stay explicitly pending.
 
-### Task 9 â€” Install and perform normal hosted acceptance
+### Task 9 — Install and perform normal hosted acceptance
 
 **Environment:** the actual Dotagram Site, its integrated D1 database, the owner's Telegram bot, the generated Site plugin, and the intended Dot's native ChatGPT context.
 
@@ -193,6 +197,38 @@ This task is the eventual installation/acceptance work, not authorization to dep
 
 **Complete when:** the specified native tool/event workflow has acceptance evidence, privacy and owner boundaries are verified, and any remaining limitations are explicitly reported. Lack of hosting credentials or a required human action must be reported as pending acceptance, not as failure of the already-established Sites/MCP architecture.
 
+### Task 10 - Setup authorization and bootstrap client
+
+**Ownership/files:** `lib/setup/`, `lib/runtime/config.ts`, `lib/telegram/client.ts`, focused authorization/transport tests; no schema migration.
+
+Implement the section 11 Sites identity/owner checks and strict decoded-argument validation before network access. Use framework server actions with their existing transport, request limits and protections; add no custom origin checks, origin environment setting, CSRF machinery, or JSON endpoint parser. Inspection/verification require the Site owner, verified boundary and token, but not Telegram owner/bot-info settings. Registration requires full messaging configuration. Reuse a bounded, sanitized transport in a grammY Api bootstrap client with the four-method allowlist and shared foreground deadline. Keep the current runtime client contract and five-tool catalog unchanged.
+
+**Validation:** unauthenticated/non-owner action invocation and invalid or unknown arguments cause zero upstream calls; hosted Sites dispatch rejects forged identities. Test the retained framework request limits/protections through its action path without imposing new Origin-header rules. Missing Telegram configuration does not create a circular bootstrap dependency. Verify cancellation, sanitized errors, no redirect following or credential projection, and no messaging regression.
+
+### Task 11 - Fixed actions and owner setup page
+
+**Ownership/files:** `lib/setup/`, a server-only `app/setup/actions.ts` module, `app/setup/` UI, and tests for setup services/framework action invocation. Do not add setup routes to `lib/runtime/router.ts`.
+
+Implement `inspectTelegramSetup`, `verifyTelegramOwner`, and `registerTelegramWebhook` as framework server actions exactly as section 11. Read the authenticated identity inside each action rather than trusting page authorization or client-supplied identity. Resolve the current Site URL from the supported server-side Sites/framework request context for webhook construction; verify the actual integration before introducing any alternative. Use browser-memory nonce state, explicit action buttons and explicit human confirmation. Display only allowlisted non-secret results for the installer to save through Sites; the application does not update environment settings. Do not trigger calls on page load/prefetch or create stored enrollment state. Implement the existing-installation skip/conflict paths before registration. Show uncertainty after a submitted write times out; never automatically retry it.
+
+**Validation:** no/unique/multiple nonce matches, full page, configured owner, existing webhook, token/bot mismatch, excluded sender/context, getUpdates parameters without offset/filter changes, shared deadline, single setWebhook, current-Site webhook target and fixed options, rejection of client-supplied destination arguments, matching/conflicting existing hook, sanitized inspection, and no secret readback. Verify no storage writes from any setup action.
+
+### Task 12 - Retire workaround and reconcile documentation
+
+**Ownership/files:** `scripts/telegram-bootstrap.py`, `scripts/telegram-register.py`, `tests/bootstrap/`, `docs/install.md`, `README.md`, `.env.example`, `AGENTS.md`, verification/progress documents and plugin reference as needed.
+
+Remove the Python helpers and their exclusive tests after the replacement works; translate meaningful checks into the TypeScript setup suite. Remove Python prerequisites, subprocess/environment handoff instructions and bootstrap artifact production. Do not delete existing local installation artifacts as an implicit cleanup step; they are not needed by the new flow and any cleanup must be explicit. Document the three deployment/configuration phases, exact owner handoffs, preserved existing settings and framework server-action invocation. Remove the superseded custom-origin/configuration instructions from the installation guide; do not add an origin key to `.env.example`. Keep the user's deterministic automation text verbatim. Correct stale statuses, overstated compliance claims and damaged document encoding without rewriting historical acceptance as new evidence.
+
+### Task 13 - Validate and upgrade the existing Site
+
+**Ownership/files:** setup unit/protocol/Worker tests and verification documentation; use supported Sites tooling for any later publication.
+
+Run focused setup tests, full npm test, typecheck, supported Sites build, affected synthetic built-Worker messaging/setup scenarios, and production-bundle/privacy inspection. Use synthetic services for clean-install and conflict/timeout cases; never delete the live webhook or re-enroll the live owner to simulate a fresh installation. Verify the browser invokes the real framework server-action path with Sites authentication and per-action owner authorization. Preserve built-in framework protections and request limits; do not add custom origin validation. Confirm webhook construction produces the exact current Site URL.
+
+When implementation/publication is authorized, retain the existing Site, bot, owner IDs, keys, database, plugin, subscriptions and automation. Deploy the revision without adding an origin setting or changing existing environment values for this purpose. Test owner inspection and unauthorized rejection; on the existing Site, registration must be a no-write already-configured result. Check subscription/environment preservation and an owner-message round trip. Record the replacement flow's clean-install synthetic evidence separately from hosted inspection/resume evidence. A genuine new-bot/new-Site installation is not implied or required as an unapproved test resource.
+
+**Complete when:** the replacement passes applicable checks, the existing installation remains intact, Python/custom handoff is removed, and any unavailable hosted cases are explicitly reported. Do not mark original acceptance as proof of the replacement.
+
 ## 4. Acceptance coverage map
 
 | Requirement | Implementation tasks | Evidence |
@@ -205,7 +241,7 @@ This task is the eventual installation/acceptance work, not authorization to dep
 | Opaque fixed 25-hour deduplication and 45-second claims | 2, 4, 5 | Schema inspection, concurrency/fencing/boundary tests, duplicate ingress |
 | Bounded in-memory delivery and honest failure behavior | 5 | Retry/deadline/interruption Worker scenarios and real native round trip |
 | One-shot typing and no block-triggered subscription deletion | 3, 5 | Feedback ordering/failure tests and Telegram operation results |
-| No payload/history/feedback/write retention | 2â€“8 | Storage assertions, schema/import/log checks, synthetic fixtures |
+| No payload/history/feedback/write retention | 2–8 | Storage assertions, schema/import/log checks, synthetic fixtures |
 | Installation and intended-Dot handoff | 7, 9 | Ordered guide, applied configuration, actual plugin and automation acceptance |
 
 The [specification](specification.md) remains authoritative for detailed schemas, timings, and limitations. This map connects requirements to work; it does not replace or weaken them.
@@ -214,10 +250,16 @@ The [specification](specification.md) remains authoritative for detailed schemas
 
 Update the task statuses as work actually completes. Keep local implementation completion and hosted acceptance separate, and do not mark pending checks as passed based on SlackDot's historical results.
 
-- [x] Tasks 1â€“7: complete application and documentation implemented.
+- [x] Tasks 1–7: complete application and documentation implemented.
 - [x] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
 - [ ] Task 9: installation and native hosted acceptance completed, with any limitations stated.
-- [x] No additional application tables, Slack dependencies, background services, or unrequested features introduced.
+- [x] No additional application tables, Slack dependencies, or background delivery services introduced.
+- [ ] Retire the unapproved Python installation/custom credential handoff through tasks 10-13.
+- [ ] Owner-authenticated setup revision implemented and verified.
 - [x] Local fixtures use synthetic data. Subsequent authorized installation and owner-reported native acceptance are recorded separately.
 
 Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. Authorized installation subsequently created the Site/webhook/plugin, and the intended Dot established native subscriptions; remaining hosted acceptance is tracked in the verification record.
+
+## 6. Setup design clarification (2026-11-08)
+
+Tasks 10-13 use framework server actions rather than custom setup POST routes. The proposed custom origin checks and additional origin environment requirement are removed. Sites authentication and explicit server-side owner authorization remain required. Implementation has not begun; the current installation guide's superseded origin instructions must be reconciled in task 12 before the replacement is released.
