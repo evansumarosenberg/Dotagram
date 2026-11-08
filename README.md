@@ -10,6 +10,8 @@ MCP 2.0 event subscriptions are supported, so the Dot can create event-triggered
 
 Support for attached media and files are not yet supported, but may be added in the future.
 
+To further expand your Dot's messaging capabilities, check out [SlackDot](https://github.com/evansumarosenberg/SlackDot), a companion project that provides a similar bridge for multiple Slack workspaces.
+
 ## Install with Codex or ChatGPT Work
 
 Use **Codex or a ChatGPT Work cloud session** with the Sites plugin and plugin connection tools available to build, deploy and configure Dotagram. You need a Telegram account and a bot created through BotFather. Once installation is ready, your intended **Dot in ChatGPT** will connect the plugin and create the event-triggered automation.
