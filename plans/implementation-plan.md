@@ -20,7 +20,7 @@ This document plans future work. The current task creates only this plan. Implem
 - Only ordinary owner DMs and text messages. Expose five tools and two message events, with no arbitrary destinations or history tools.
 - Store only subscriptions and the specified five-column opaque deduplication table. No message payloads, write results, feedback history, or additional lifecycle state.
 - Keep the fixed 25-hour deduplication window, 45-second claims, shared 20-second callback deadline, and 25-second final feedback deadline.
-- Use one-shot typing after confirmed new-message delivery. Do not add persistent status, eyes reactions, or repeated typing refreshes.
+- Use one-shot typing after confirmed new-message delivery. Do not add persistent status, automatic eyes delivery receipts, or repeated typing refreshes. An explicitly requested eyes reaction remains available through the reaction tool.
 - Use signed references for bot message edits/deletes. Do not replace them with stored write records or unrestricted message IDs.
 - Keep Telegram blocking separate from MCP subscription cancellation. Do not register `my_chat_member` or delete subscriptions on blocked-message write failures.
 - Tolerate and discard unknown Telegram fields while keeping MCP tool and subscription arguments strict.
@@ -92,7 +92,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 7. After a valid confirmed send response, issue a signed message reference containing only the specified provenance. Require it for edit/delete and validate its signature, version, owner/bot/chat binding, and exact target. Editing preserves original send provenance.
 8. Map definite API errors, rate-limit delays, and ambiguous write outcomes into the error contract. Each mutation makes at most one write attempt. A blocked-chat write error leaves subscriptions untouched.
 
-**Validation:** private-owner normalization versus every excluded context; future Telegram metadata discarded; full-text and Unicode boundaries; forwarded text authorization; bot identity mismatch; fixed destinations; tampered/cross-owner/cross-bot references; owner-message deletion rejection; reply failures; reaction clearing; ambiguous results without resend or result persistence.
+**Validation:** private-owner normalization versus every excluded context; future Telegram metadata discarded; full-text and Unicode boundaries; forwarded text authorization; bot identity mismatch; fixed destinations; tampered/cross-owner/cross-bot references; owner-message deletion rejection; reply failures; setting and clearing a reaction on an owner-authored message using its raw message ID; ambiguous results without resend or result persistence.
 
 **Complete when:** the service implements all five tool operations' underlying behavior, with synthetic transport tests and no stored message or write state.
 
@@ -136,7 +136,7 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 1. Preserve the SDK-owned MCP 2.0 transport and Worker schema validator. Enforce owner authorization before discovery, tool calls, and event methods.
 2. Register exactly `telegram_get_connection_info`, `telegram_send_message`, `telegram_edit_message`, `telegram_delete_message`, and `telegram_set_reaction` with strict input/output contracts and truthful annotations.
 3. Advertise the two events, `capabilities.events`, webhook delivery, empty subscription argument schemas, and the actual payload schemas. Wire subscribe/unsubscribe to task 4 and keep `cursor: null`.
-4. Verify advertised JSON Schema agrees with runtime validation, including rejection of arbitrary destination fields, unknown MCP arguments, unsigned mutation targets, and unsupported event/filter names.
+4. Verify advertised JSON Schema agrees with runtime validation, including rejection of arbitrary destination fields, unknown MCP arguments, unsigned edit/delete targets, and unsupported event/filter names. Reactions retain raw `message_id` inputs scoped to the owner DM; they do not require signed bot-message references.
 5. Adapt the public landing page, `/health`, and authenticated setup page. Bootstrap may show only the visitor's own Site identity; only the configured owner can inspect configuration presence and connection details.
 6. Remove Slack language, history promises, stored-result replay claims, and unsupported tools/events. Explain brief typing, ambiguous writes, and delivery limits accurately in tool/reference text.
 
