@@ -1,6 +1,6 @@
 # Dotagram implementation plan
 
-Status: planned; no implementation or deployment has begun.
+Status: tasks 1–8 implemented and locally verified; task 9 pending live installation and native acceptance. See [verification record](../docs/verification.md).
 
 Last updated: 2026-11-07
 
@@ -12,7 +12,7 @@ Implement the reviewed specification by adapting the current SlackDot applicatio
 
 SlackDot already demonstrates MCP Events delivery through ChatGPT Sites. Build the intended Dotagram application directly. There is no separate compatibility prototype or feasibility phase; platform checks are ordinary verification of the resulting application.
 
-This document plans future work. The current task creates only this plan. Implementation, installation, live messages, subscriptions, and deployment have not been performed by writing it.
+This plan was written before implementation. The implementation task has now completed the local application and validation work described below. Live installation remains a separate, pending acceptance phase.
 
 ## 2. Constraints that apply to every task
 
@@ -36,14 +36,14 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 
 | Task | Deliverable | Depends on | Status |
 | --- | --- | --- | --- |
-| 1 | Sites application foundation and dependency cleanup | Existing specification | Pending |
-| 2 | Configuration, owner authorization, crypto, and fresh D1 schema | 1 | Pending |
-| 3 | grammY client, Telegram contracts, tools service, and signed references | 2 | Pending |
-| 4 | Subscription lifecycle, callback transport, and opaque deduplication | 2, event schemas from 3 | Pending |
-| 5 | Authenticated ingress, bounded delivery, and feedback | 3, 4 | Pending |
-| 6 | Complete MCP catalog and minimal setup experience | 2–5 | Pending |
-| 7 | Installation instructions and plugin reference | 6 | Pending |
-| 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Pending |
+| 1 | Sites application foundation and dependency cleanup | Existing specification | Complete locally |
+| 2 | Configuration, owner authorization, crypto, and fresh D1 schema | 1 | Complete locally |
+| 3 | grammY client, Telegram contracts, tools service, and signed references | 2 | Complete locally |
+| 4 | Subscription lifecycle, callback transport, and opaque deduplication | 2, event schemas from 3 | Complete locally |
+| 5 | Authenticated ingress, bounded delivery, and feedback | 3, 4 | Complete locally |
+| 6 | Complete MCP catalog and minimal setup experience | 2–5 | Complete locally |
+| 7 | Installation instructions and plugin reference | 6 | Complete locally |
+| 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Complete locally |
 | 9 | Sites installation and native acceptance | 8; installation access and human handoffs | Pending |
 
 ### Task 1 — Prepare the application foundation
@@ -214,10 +214,10 @@ The [specification](specification.md) remains authoritative for detailed schemas
 
 Update the task statuses as work actually completes. Keep local implementation completion and hosted acceptance separate, and do not mark pending checks as passed based on SlackDot's historical results.
 
-- [ ] Tasks 1–7: complete application and documentation implemented.
-- [ ] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
+- [x] Tasks 1–7: complete application and documentation implemented.
+- [x] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
 - [ ] Task 9: installation and native hosted acceptance completed, with any limitations stated.
-- [ ] No additional application tables, Slack dependencies, background services, or unrequested features introduced.
-- [ ] Only intended test artifacts cleaned up; owner configuration and automation preserved.
+- [x] No additional application tables, Slack dependencies, background services, or unrequested features introduced.
+- [x] No live owner configuration, messages, or automation modified; test data is synthetic and local.
 
-At the time of writing, every item is pending. No application code, dependencies, database, Site, Telegram webhook, plugin, or native subscription has been created or modified by this planning task.
+Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. No live Site, Telegram webhook, plugin, or native subscription has been created by the local implementation work.
