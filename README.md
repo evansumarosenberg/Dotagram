@@ -4,7 +4,7 @@
 
 A lightweight bridge from your private Telegram bot conversation to your Dot, deployed on ChatGPT Sites. No external infrastructure needed!
 
-Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages, and set or clear reactions. Messages from groups or arbitrary contacts are intentionally outside scope.
+Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages, and set or clear reactions. Telegram groups and arbitrary contacts are intentionally outside scope.
 
 MCP 2.0 event subscriptions are supported, so the Dot can create event-triggered automations for replying to messages.
 
