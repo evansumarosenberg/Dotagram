@@ -18,7 +18,7 @@ function fixture(fresh=true) {
     calls.push({method,body:JSON.parse(init.body as string)});
     return Response.json({ok:true,result:answers[method]});
   };
-  const run=(op:'inspect'|'verify'|'register',args:unknown=op==='verify'?{nonce}:{},principal:string|null='owner',fetch=transport)=>
+  const run=(op:'inspect'|'prepare'|'verify'|'register',args:unknown=op==='verify'?{nonce}:op==='prepare'?{confirm_replacement:true}:{},principal:string|null='owner',fetch=transport)=>
     runSetupAction(op,args,e,principal,()=>destination,fetch);
   return {e,calls,answers,transport,run};
 }
@@ -27,7 +27,7 @@ afterEach(()=>vi.useRealTimers());
 
 it('authorizes every action and rejects strict arguments before any upstream call or URL resolution',async()=>{
   const f=fixture();
-  for(const op of ['inspect','verify','register'] as const) {
+  for(const op of ['inspect','prepare','verify','register'] as const) {
     for(const principal of [null,'other']) expect(await f.run(op,op==='verify'?{nonce}:{},principal)).toEqual({status:'error',error:'unauthorized'});
     for(const args of [null,[],{destination},{nonce:'wrong'},op==='verify'?{nonce,extra:true}:{extra:true}])
       expect((await f.run(op,args)).status).toBe('error');
@@ -36,6 +36,62 @@ it('authorizes every action and rejects strict arguments before any upstream cal
   expect(f.calls).toEqual([]);
   const resolve=vi.fn(()=>destination);
   await runSetupAction('inspect',{},f.e,null,resolve,f.transport);expect(resolve).not.toHaveBeenCalled();
+});
+it('requires explicit replacement confirmation before preparing an unconfigured owner',async()=>{
+  const f=fixture();f.answers.getWebhookInfo=matching;
+  for(const args of [{},{confirm_replacement:false},{confirm_replacement:'true'},{confirm_replacement:true,url:destination}]) {
+    expect(await f.run('prepare',args)).toEqual({status:'error',error:'invalid_arguments'});
+  }
+  expect(f.calls).toEqual([]);
+  const existing=fixture(false);
+  expect(await existing.run('prepare')).toEqual({status:'owner_configured'});expect(existing.calls).toEqual([]);
+  f.answers.getMe={...botInfo,id:999};
+  expect(await f.run('prepare')).toEqual({status:'error',error:'installation_mismatch'});
+  expect(f.calls.map(c=>c.method)).toEqual(['getMe']);
+});
+it('removes a confirmed existing webhook once, sets text update types before nonce delivery, and preserves pending updates',async()=>{
+  for(const info of [matching,{...matching,max_connections:4},{...matching,url:'https://other.example/private'}]) {
+    const f=fixture();f.answers.getWebhookInfo=info;f.answers.getUpdates=[message()];
+    const transport:TelegramFetch=async(url,init)=>{
+      const response=await f.transport(url,init);
+      if(url.endsWith('/setWebhook')) f.answers.getWebhookInfo=absent;
+      return response;
+    };
+    expect(await f.run('prepare',{confirm_replacement:true},'owner',transport)).toEqual({status:'ready_for_verification'});
+    expect(f.calls.map(c=>c.method)).toEqual(['getMe','getWebhookInfo','setWebhook','getWebhookInfo']);
+    expect(f.calls[2].body).toEqual({url:'',allowed_updates:['message','edited_message'],drop_pending_updates:false});
+    expect(await f.run('verify')).toMatchObject({status:'candidate',candidate_user_id:'456'});
+  }
+  const f=fixture();expect(await f.run('prepare')).toEqual({status:'ready_for_verification'});
+  expect(f.calls.map(c=>c.method)).toEqual(['getMe','getWebhookInfo']);
+});
+it('reports uncertain removal without retrying or proceeding to nonce inspection',async()=>{
+  for(const point of ['write','after','mismatch']) {
+    const f=fixture();f.answers.getWebhookInfo=matching;let writes=0;
+    const transport:TelegramFetch=async(url,init)=>{
+      if(url.endsWith('/setWebhook')) {writes++;if(point==='write') throw new Error('PRIVATE');}
+      if(writes && url.endsWith('/getWebhookInfo') && point==='after') throw new Error('PRIVATE');
+      return f.transport(url,init);
+    };
+    expect(await f.run('prepare',{confirm_replacement:true},'owner',transport)).toEqual({status:'uncertain'});
+    expect(writes).toBe(1);expect(f.calls.some(c=>c.method==='getUpdates')).toBe(false);
+  }
+});
+it('replaces matching and conflicting webhooks only with explicit confirmation and full configuration',async()=>{
+  for(const info of [matching,{...matching,max_connections:4},{...matching,url:'https://other.example/private'}]) {
+    const f=fixture(false);f.answers.getWebhookInfo=info;
+    const transport:TelegramFetch=async(url,init)=>{
+      const response=await f.transport(url,init);
+      if(url.endsWith('/setWebhook')) f.answers.getWebhookInfo=matching;
+      return response;
+    };
+    expect(await f.run('register',{confirm_replacement:true},'owner',transport)).toEqual({status:'registered'});
+    expect(f.calls.filter(c=>c.method==='setWebhook')).toEqual([{method:'setWebhook',body:{url:destination,secret_token:'synthetic_secret',allowed_updates:['message','edited_message'],max_connections:1,drop_pending_updates:false}}]);
+  }
+  const fresh=fixture();expect((await fresh.run('register',{confirm_replacement:true})).status).toBe('error');expect(fresh.calls).toEqual([]);
+  const f=fixture(false);f.answers.getWebhookInfo=matching;f.answers.getMe={...botInfo,can_join_groups:true};
+  expect(await f.run('register',{confirm_replacement:true})).toEqual({status:'error',error:'bot_features_incompatible'});
+  expect(f.calls.some(c=>c.method==='setWebhook')).toBe(false);
 });
 it('inspects with token only, strips unapproved fields, and projects coarse webhook state',async()=>{
   const f=fixture();f.e.SUBSCRIPTION_ENCRYPTION_KEY='';f.e.CALLBACK_ALLOWED_ORIGINS='';

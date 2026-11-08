@@ -27,8 +27,13 @@ const options={modules:modules.map(file=>({type:'ESModule',path:resolve(root,fil
     else if(method==='getWebhookInfo') result={...webhook,last_error_message:'PRIVATE upstream description',ip_address:'PRIVATE'};
     else if(method==='getUpdates') {assert.deepEqual(body,{timeout:0,limit:100});result=updates;}
     else if(method==='setWebhook') {
-      assert.deepEqual(body,{url:destination,secret_token:'synthetic_secret',allowed_updates:['message','edited_message'],max_connections:1,drop_pending_updates:false});
-      webhook={url:destination,has_custom_certificate:false,max_connections:1,allowed_updates:['message','edited_message']};
+      if(body.url==='') {
+        assert.deepEqual(body,{url:'',allowed_updates:['message','edited_message'],drop_pending_updates:false});
+        webhook=absent;
+      } else {
+        assert.deepEqual(body,{url:destination,secret_token:'synthetic_secret',allowed_updates:['message','edited_message'],max_connections:1,drop_pending_updates:false});
+        webhook={url:destination,has_custom_certificate:false,max_connections:1,allowed_updates:['message','edited_message']};
+      }
       if(writeTimeout) return Response.json({ok:false,error_code:503,description:'PRIVATE'});
       result=true;
     } else assert.fail('Unexpected setup API method');
@@ -36,7 +41,7 @@ const options={modules:modules.map(file=>({type:'ESModule',path:resolve(root,fil
   }};
 const clientRoot=resolve('dist/client');
 const clientCode=readdirSync(clientRoot,{recursive:true}).filter(f=>String(f).endsWith('.js')).map(f=>readFileSync(resolve(clientRoot,String(f)),'utf8')).join('\n');
-const actionIds=Object.fromEntries(['inspectTelegramSetup','verifyTelegramOwner','registerTelegramWebhook'].map(name=>{
+const actionIds=Object.fromEntries(['inspectTelegramSetup','prepareTelegramOwnerVerification','verifyTelegramOwner','registerTelegramWebhook'].map(name=>{
   const match=clientCode.match(new RegExp('([a-f0-9]+#'+name+')'));assert.ok(match);return [name,match[1]];
 }));
 for(const prohibited of ['123:synthetic','synthetic_secret','BootstrapApi','api.telegram.org','setWebhook','getUpdates']) assert.ok(!clientCode.includes(prohibited));
@@ -98,17 +103,32 @@ try {
   updates=[message,message];await check('verifyTelegramOwner',{nonce},'ambiguous');
   updates=Array.from({length:100},()=>message);await check('verifyTelegramOwner',{nonce},'incomplete');
   await check('registerTelegramWebhook',{},'error');assert.ok(!calls.some(c=>c.method==='setWebhook'));
+  webhook={...absent,url:'https://other.example/PRIVATE'};
+  await check('prepareTelegramOwnerVerification',{},'error');
+  await check('prepareTelegramOwnerVerification',{confirm_replacement:false},'error');
+  assert.ok(!calls.some(c=>c.method==='setWebhook'));
+  await check('verifyTelegramOwner',{nonce},'webhook_exists');
+  await check('prepareTelegramOwnerVerification',{confirm_replacement:true},'ready_for_verification');
+  assert.equal(calls.filter(c=>c.method==='setWebhook').length,1);
+  updates=[message];await check('verifyTelegramOwner',{nonce},'candidate');
+  webhook={...absent,url:'https://other.example/PRIVATE'};writeTimeout=true;
+  await check('prepareTelegramOwnerVerification',{confirm_replacement:true},'uncertain');
+  assert.equal(calls.filter(c=>c.method==='setWebhook').length,2);
+  assert.equal((await check('inspectTelegramSetup',{},'inspected')).webhook,'absent');
+  writeTimeout=false;calls=[];
   // Apply synthetic final settings as a new Worker configuration; production
   // settings, keys, subscriptions and Site are never involved.
   await runtime.dispose();bindings.TELEGRAM_BOT_INFO=JSON.stringify(bot);bindings.TELEGRAM_OWNER_USER_ID='456';runtime=new Miniflare(options);
   await check('verifyTelegramOwner',{nonce},'owner_configured');
+  await check('prepareTelegramOwnerVerification',{confirm_replacement:true},'owner_configured');
   await check('registerTelegramWebhook',{},'registered');assert.equal(calls.filter(c=>c.method==='setWebhook').length,1);
   await check('registerTelegramWebhook',{},'already_configured');assert.equal(calls.filter(c=>c.method==='setWebhook').length,1);
   webhook={...webhook,url:'https://other.example/PRIVATE'};
   assert.equal((await check('inspectTelegramSetup',{},'inspected')).webhook,'another_destination');
   await check('registerTelegramWebhook',{},'conflict');assert.equal(calls.filter(c=>c.method==='setWebhook').length,1);
+  await check('registerTelegramWebhook',{confirm_replacement:true},'registered');assert.equal(calls.filter(c=>c.method==='setWebhook').length,2);
   webhook=absent;writeTimeout=true;await check('registerTelegramWebhook',{},'uncertain');
-  assert.equal(calls.filter(c=>c.method==='setWebhook').length,2);
+  assert.equal(calls.filter(c=>c.method==='setWebhook').length,3);
   assert.equal((await check('inspectTelegramSetup',{},'inspected')).webhook,'matching');
   const db=await runtime.getD1Database('DB');
   assert.equal((await db.prepare("SELECT count(*) n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'").first()).n,0);

@@ -14,6 +14,10 @@ export async function verifyTelegramOwner(args:unknown) {
   const user=await getChatGPTUser();
   return runSetupAction('verify',args,env as Env,user?.userId??null,currentWebhookUrl);
 }
+export async function prepareTelegramOwnerVerification(args:unknown) {
+  const user=await getChatGPTUser();
+  return runSetupAction('prepare',args,env as Env,user?.userId??null,currentWebhookUrl);
+}
 export async function registerTelegramWebhook(args:unknown) {
   const user=await getChatGPTUser();
   return runSetupAction('register',args,env as Env,user?.userId??null,currentWebhookUrl);

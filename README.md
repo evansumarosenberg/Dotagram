@@ -4,9 +4,11 @@
 
 A lightweight bridge from your private Telegram bot conversation to your Dot, deployed on ChatGPT Sites. No external infrastructure needed!
 
-Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages using signed references, and set or clear reactions. Groups and arbitrary destinations are intentionally outside scope.
+Dotagram receives new and edited **text messages from one explicitly configured owner**. Your Dot can send text, reply, edit/delete its own messages, and set or clear reactions. Messages from groups or arbitrary contacts are intentionally outside scope.
 
-MCP 2.0 event subscriptions are supported, so the Dot can create event-triggered automations for new and edited messages.
+MCP 2.0 event subscriptions are supported, so the Dot can create event-triggered automations for replying to messages.
+
+Support for attached media and files are not yet supported, but may be added in the future.
 
 ## Install with Codex or ChatGPT Work
 
@@ -28,7 +30,7 @@ TELEGRAM_BOT_TOKEN=
 
 The installation agent configures the remaining values. You may also need to sign in, approve the plugin connection, send the setup page's verification nonce to your bot, explicitly confirm your Telegram owner account, and send a test DM. Some authenticated steps may need your browser. Enter the bot token directly in Sites settings; keep secrets out of chat.
 
-Each installation connects one Telegram bot, one verified human owner and one controlling Dot. When resuming an existing installation, keep the same bot, Site, plugin and automation; do not repeat owner enrollment or replace a working webhook.
+Each installation connects one Telegram bot, one verified human owner, and one controlling Dot. A repurposed bot's existing webhook can be replaced through setup after your explicit confirmation. When continuing an existing Dotagram installation, keep its bot, Site, plugin, and automation and skip owner enrollment.
 
 ## Privacy
 

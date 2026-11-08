@@ -2,7 +2,7 @@
 
 **Audience:** the installation agent, whether Codex or ChatGPT Work, including a cloud session. The owner completes sign-in, BotFather, credential entry, and Telegram identity confirmation. The owner's intended **Dot in ChatGPT** creates and runs the native event automation. These are different roles; do not assume the installer is the controlling Dot.
 
-**Starting point:** this repository is reusable application source, not an existing installation. Its hosting manifest contains no Site ID and starts with MCP publication disabled. Create a fresh installation unless the user explicitly asks to resume an identified Site. The three framework setup actions are implemented; perform the checks in this guide for the source and installation being evaluated.
+**Starting point:** this repository is reusable application source, not an existing installation. Its hosting manifest contains no Site ID and starts with MCP publication disabled. Create a fresh installation unless the user explicitly asks to resume an identified Site. The four framework setup actions are implemented; perform the checks in this guide for the source and installation being evaluated.
 
 Read [AGENTS.md](../AGENTS.md), [specification section 11](../plans/specification.md#11-owner-authenticated-setup-and-installation), and the current installed Sites skill, including its identity/secrets and Site MCP references. Use the application source and retained Sites integration; do not replace it with a starter or a separate compatibility service. This guide does not authorize implementation of missing features.
 
@@ -40,7 +40,7 @@ When handing off, provide the actual link, exact action, expected result, and pe
 | 2. Establish owner authorization | Owner ID applied; bootstrap identity/dispatch checks passed; verification guard applied |
 | 3. Configure bot token and stable secrets | Preliminary settings deployed; owner inspection succeeds and post-enable unauthorized action checks pass |
 | 4. Inspect and verify Telegram owner | Correct bot, explicit human confirmation, final bot/owner settings applied |
-| 5. Register or preserve webhook | Registration/public settings verified without discarding updates or replacing another webhook |
+| 5. Register or replace webhook | Registration/public settings verified; any replacement explicitly confirmed by the owner; pending updates preserved |
 | 6. Publish and connect MCP | Same Site's generated plugin connected |
 | 7. Find Dot and establish automation | Correct Dot, both event bindings, exact instruction text, automation enabled |
 | 8. Test a round trip | Owner sends a Telegram message and receives the Dot's reply |
@@ -106,7 +106,18 @@ Verify the exact OpenAI-owned callback origin through the current Sites/MCP docu
 
 Invoke **Inspect bot** (`inspectTelegramSetup`) through the setup page. This is a framework server action, not a standalone URL or MCP tool. Confirm the live bot identity and coarse webhook state. A configured bot-identity mismatch is a failure; do not overwrite the expected identity to make it disappear. Report group/unsupported-feature settings that must be corrected in BotFather before new registration.
 
-For an existing verified installation, compare the returned bot with its saved identity, preserve `TELEGRAM_OWNER_USER_ID` and `TELEGRAM_BOT_INFO`, and skip nonce enrollment. If a webhook exists but the intended owner binding is unknown, stop this phase with that conflict. Do not delete the webhook, reset the owner, or recreate the bot to regain update polling.
+If this Site already has a verified Telegram owner configured, preserve `TELEGRAM_OWNER_USER_ID` and `TELEGRAM_BOT_INFO` and skip nonce enrollment. Continue to phase 5; a webhook pointing elsewhere can be replaced there after confirmation. This is different from repurposing a bot for a fresh Dotagram installation, where the human owner still needs verification.
+
+### Repurpose a bot with an existing webhook
+
+If **Inspect bot** reports any existing webhook and this Site has no configured Telegram owner:
+
+1. Ask the owner: **This bot already has a webhook. May Dotagram replace it? This will stop delivery to the previous integration. Pending updates will be preserved.** If they decline, leave it unchanged and stop setup for this bot.
+2. After explicit confirmation, select the setup page's replacement confirmation checkbox and **Prepare owner verification** (`prepareTelegramOwnerVerification`). This owner-authenticated action removes the existing webhook and sets the supported message update types using Telegram's `setWebhook` with an empty URL and `drop_pending_updates: false`. It does not register Dotagram yet or bind an owner.
+3. After success, select **Inspect bot** again. Once no webhook is reported, generate and send a new nonce using the steps below. Do not reuse a nonce sent while the previous integration was receiving messages.
+4. Complete owner verification and apply the final settings, then register Dotagram's webhook in phase 5. Until registration, webhook delivery remains paused. Do not run the previous integration concurrently; it could re-register its webhook or consume pending updates.
+
+If removal has an uncertain outcome, inspect the bot before deciding what to do next. Do not automatically repeat the write or use an external script. Telegram does not allow nonce polling while a webhook is registered. [Telegram webhook API](https://core.telegram.org/bots/api#setwebhook)
 
 ### Verify a fresh installation
 
@@ -120,23 +131,25 @@ For an existing verified installation, compare the returned bot with its saved i
 | --- | --- |
 | No match | Confirm correct bot, exact current nonce and account; any next read must be deliberate. Do not bind an ID or automatically poll |
 | Multiple matches or full pending page | Report ambiguity/incomplete inspection and stop. Do not advance offsets, clear pending updates, or add a helper script |
-| Existing owner/webhook | Use the resume path; do not repeat enrollment or remove a working webhook |
+| Owner already configured on this Site | Preserve the verified owner and skip enrollment; continue to phase 5 |
+| Existing webhook, no configured owner | Ask for replacement confirmation, use **Prepare owner verification**, then inspect and send a new nonce |
 | Token revoked or bot changed | Correct the actual configured token/identity mismatch through the owner and Sites; do not silently accept another bot |
 | Page reloaded | Unfinished nonce state is gone. Use the page's new nonce for a deliberate fresh verification; no enrollment state was stored |
 
-**Complete when:** the human owner explicitly confirmed the candidate, all eight settings are applied, and owner-authorized inspection succeeds. The token remains inside Sites/Worker execution. If reused-bot state makes verification impossible, report the concrete conflict for a separate decision rather than inventing recovery infrastructure.
+**Complete when:** the human owner explicitly confirmed the candidate, all eight settings are applied, and owner-authorized inspection succeeds. The token remains inside Sites/Worker execution. A full pending-update page still requires a deliberate next decision; webhook replacement does not authorize clearing updates.
 
-## 5. Register or preserve the Telegram webhook
+## 5. Register or replace the Telegram webhook
 
 **Inputs:** complete applied configuration and owner-authenticated setup.
 
-1. Invoke **Register or check webhook** (`registerTelegramWebhook`) from the setup UI. It derives this Site's `/telegram/webhook` URL from the original Worker request URL carried in request-local server context, verifies the current bot/configuration, and uses the saved secret. The installer does not supply an arbitrary target or credential to the action.
-2. If absent, registration makes one write with `allowed_updates: ["message", "edited_message"]`, `max_connections: 1`, and `drop_pending_updates: false`, followed by inspection.
-3. If already configured for this Site with matching public settings, accept the no-write result. If another destination or incompatible settings are detected, preserve the webhook and report the conflict. Do not take it over or clear pending updates.
-4. If the write times out or its result is uncertain, do not automatically repeat registration. Explicitly inspect first and report what is and is not known. Inspection cannot reveal the registered secret; matching public settings are not proof of secret equality.
-5. Record registration/public-settings verification separately from authenticated ingress and the phase 8 end-to-end test. If ingress cannot be observed without logging live content, leave that evidence pending until the real round trip; do not add payload logging or an inspection endpoint.
+1. Select **Inspect bot** after the final settings are deployed. If a webhook exists and needs replacement, ask the owner to confirm replacement and explain that delivery to the previous integration will stop. After confirmation, select the replacement checkbox. If the owner declines, leave it unchanged. A webhook already matching this Site can be checked without replacement.
+2. Invoke **Register or replace webhook** (`registerTelegramWebhook`) from the setup UI. It derives this Site's `/telegram/webhook` URL from the original Worker request URL carried in request-local server context, verifies the current bot/configuration, and uses the saved secret. The installer does not supply an arbitrary target or credential to the action.
+3. If absent or replacement was confirmed, registration makes one `setWebhook` write with the saved secret, `allowed_updates: ["message", "edited_message"]`, `max_connections: 1`, and `drop_pending_updates: false`, followed by inspection. With a configured owner, replacement is direct; no prior removal or nonce verification is needed.
+4. Without replacement confirmation, a matching webhook returns a no-write result; another destination or incompatible settings returns a conflict. Inspect and obtain confirmation before trying replacement. Never clear pending updates.
+5. If the write times out or its result is uncertain, do not automatically repeat registration. Explicitly inspect first and report what is and is not known. Inspection cannot reveal the registered secret; matching public settings are not proof of secret equality.
+6. Record registration/public-settings verification separately from authenticated ingress and the phase 8 end-to-end test. If ingress cannot be observed without logging live content, leave that evidence pending until the real round trip; do not add payload logging or an inspection endpoint.
 
-**Complete when:** registration succeeded and settings were inspected, or the existing matching webhook was preserved. End-to-end delivery is still a separate result. No `deleteWebhook`, local command, secret export, or automatic write retry is authorized by this procedure.
+**Complete when:** registration or confirmed replacement succeeded and settings were inspected, or the existing matching webhook was checked without a write. End-to-end delivery is still a separate result. All webhook changes use the owner-authenticated setup page; no local command, secret export, or automatic write retry is part of this procedure.
 
 ## 6. Publish MCP and connect the generated plugin
 
@@ -198,7 +211,7 @@ Once the automation is enabled, ask me to send a test message in my private Tele
 
 ## Resuming or reporting a blocker
 
-When the user explicitly requests resumption, verify the identified Site still exists and continue from the first incomplete phase recorded in their private installation conversation. Preserve its bot, human/Site owner bindings, keys, database, plugin and intended automation. Existing verified owners skip nonce enrollment; matching webhooks use inspection/no-write registration. Never disable a working webhook or MCP publication to replay a fresh-install sequence.
+Resumption means continuing an existing Dotagram Site explicitly identified by the user; it does not mean repurposing a Telegram bot just because that bot has a webhook. Verify the identified Site still exists and continue from its first incomplete phase. Preserve its bot, human/Site owner bindings, keys, database, plugin and intended automation. Existing verified owners skip nonce enrollment; matching webhooks use inspection/no-write registration unless replacement is explicitly confirmed. Do not disable MCP publication or repeat owner enrollment to replay a fresh-install sequence.
 
 Report the exact phase, operation, sanitized error, completed evidence, and one concrete next action. Examples: the owner must sign in at the supplied setup link, correct a token directly in Sites, confirm a candidate ID, or open their named Dot to connect the plugin. Where the agent has the required tools and authorization, complete the action instead of assigning it to the owner. Secret masking by itself requires no handoff.
 

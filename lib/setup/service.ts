@@ -7,13 +7,15 @@ import { callbackUrl } from '../events/callback';
 
 export const emptySetupArgs = z.object({}).strict();
 export const nonceArgs = z.object({nonce:z.string().regex(/^dotagram-verify-[0-9a-f]{32}$/)}).strict();
+export const replacementArgs = z.object({confirm_replacement:z.literal(true)}).strict();
+export const registrationArgs = z.object({confirm_replacement:z.boolean().optional()}).strict();
 export type BotInfo = z.infer<typeof botInfoSchema>;
 export type WebhookState = 'absent' | 'matching' | 'settings_conflict' | 'another_destination';
 export type SetupResult =
   | {status:'inspected';bot_info:BotInfo;webhook:WebhookState}
   | {status:'candidate';bot_info:BotInfo;candidate_user_id:string}
   | {status:'no_match'|'ambiguous'|'incomplete'|'owner_configured'|'webhook_exists'}
-  | {status:'registered'|'already_configured'|'conflict'|'uncertain'}
+  | {status:'registered'|'already_configured'|'conflict'|'uncertain'|'ready_for_verification'}
   | {status:'error';error:string};
 
 const webhookSchema = z.object({url:z.string(),max_connections:z.number().int().optional(),allowed_updates:z.array(z.string()).optional(),has_custom_certificate:z.boolean()});
@@ -47,6 +49,9 @@ class BootstrapApi {
   getMe(){return this.call(()=>this.api.getMe());}
   getWebhookInfo(){return this.call(()=>this.api.getWebhookInfo());}
   getUpdates(){return this.call(()=>this.api.getUpdates({timeout:0,limit:100}));}
+  prepareVerification(){return this.call(()=>this.api.setWebhook('',{
+    allowed_updates:['message','edited_message'],drop_pending_updates:false,
+  }),true);}
   setWebhook(url:string,secret:string){return this.call(()=>this.api.setWebhook(url,{
     secret_token:secret,allowed_updates:['message','edited_message'],max_connections:1,drop_pending_updates:false,
   }),true);}
@@ -82,6 +87,21 @@ export class SetupService {
     const bot_info=await this.identity();
     return {status:'inspected',bot_info,webhook:await this.webhook()};
   }
+  async prepareVerification():Promise<SetupResult> {
+    if(this.env.TELEGRAM_OWNER_USER_ID) return {status:'owner_configured'};
+    await this.identity();
+    if(await this.webhook()==='absent') return {status:'ready_for_verification'};
+    // Telegram accepts an empty URL to remove a webhook. Set the supported
+    // update types before the owner sends a nonce, including for repurposed bots.
+    try {
+      if(await this.api.prepareVerification()!==true) return {status:'uncertain'};
+    } catch(error) {
+      if(error instanceof Failure && error.category==='uncertain') return {status:'uncertain'};
+      throw error;
+    }
+    try {return {status:await this.webhook()==='absent'?'ready_for_verification':'uncertain'};}
+    catch {return {status:'uncertain'};}
+  }
   async verify(nonce:string):Promise<SetupResult> {
     if(this.env.TELEGRAM_OWNER_USER_ID) return {status:'owner_configured'};
     const bot_info=await this.identity();
@@ -99,7 +119,7 @@ export class SetupService {
     if(matches.length!==1) return {status:'ambiguous'};
     return {status:'candidate',bot_info,candidate_user_id:matches[0]};
   }
-  async register():Promise<SetupResult> {
+  async register(confirmReplacement=false):Promise<SetupResult> {
     requireConfig(this.env,['DB','TELEGRAM_WEBHOOK_SECRET','CALLBACK_ALLOWED_ORIGINS']);
     telegramConfig(this.env);encryptionKey(this.env);
     if(!/^[A-Za-z0-9_-]{1,256}$/.test(this.env.TELEGRAM_WEBHOOK_SECRET)) throw new Failure('invalid_webhook_secret');
@@ -108,8 +128,8 @@ export class SetupService {
       try {if(new URL(origin).origin!==origin) throw new Error();callbackUrl(origin,origin);} catch {throw new Failure('callback_policy_unconfigured');}
     }
     const bot=await this.identity(),state=await this.webhook();
-    if(state==='matching') return {status:'already_configured'};
-    if(state!=='absent') return {status:'conflict'};
+    if(state==='matching' && !confirmReplacement) return {status:'already_configured'};
+    if(state!=='absent' && !confirmReplacement) return {status:'conflict'};
     if(bot.can_join_groups || bot.supports_inline_queries || bot.can_connect_to_business ||
       bot.has_topics_enabled || bot.allows_users_to_create_topics)
       throw new Failure('bot_features_incompatible');
@@ -124,15 +144,18 @@ export class SetupService {
   }
 }
 
-export async function runSetupAction(operation:'inspect'|'verify'|'register',args:unknown,env:Env,principal:string|null,
+export async function runSetupAction(operation:'inspect'|'prepare'|'verify'|'register',args:unknown,env:Env,principal:string|null,
   webhookUrl:()=>string,transport?:TelegramFetch):Promise<SetupResult> {
   const deadline=Date.now()+25_000;
   try {
     authorizeSetup(env,principal);
-    const input=operation==='verify'?nonceArgs.safeParse(args):emptySetupArgs.safeParse(args);
+    const input=operation==='verify'?nonceArgs.safeParse(args):operation==='prepare'?replacementArgs.safeParse(args):operation==='register'?registrationArgs.safeParse(args):emptySetupArgs.safeParse(args);
     if(!input.success) return {status:'error',error:'invalid_arguments'};
     const service=new SetupService(env,webhookUrl(),deadline,transport);
-    return await (operation==='inspect'?service.inspect():operation==='register'?service.register():service.verify((input.data as {nonce:string}).nonce));
+    if(operation==='inspect') return await service.inspect();
+    if(operation==='prepare') return await service.prepareVerification();
+    if(operation==='register') return await service.register((input.data as {confirm_replacement?:boolean}).confirm_replacement);
+    return await service.verify((input.data as {nonce:string}).nonce);
   } catch(error) {
     // Only our own fixed categories cross the action boundary. Never serialize
     // an upstream exception, request, URL, payload, or error description.
