@@ -32,6 +32,6 @@ The installation agent configures the remaining values. You may also need to sig
 
 Each installation connects one Telegram bot, one verified human owner, and one controlling Dot. A repurposed bot's existing webhook can be replaced through setup after your explicit confirmation. When continuing an existing Dotagram installation, keep its bot, Site, plugin, and automation and skip owner enrollment.
 
-## Privacy
+## Privacy and Data Retention
 
-Dotagram stores event subscriptions and opaque, privacy-preserving records that suppress repeat event delivery for 25 hours. Expired records are removed on subsequent activity; no message content or delivery history is retained.
+Each Dotagram installation stores event subscriptions and privacy-preserving records in the database attached to the owner's ChatGPT Site. These opaque records suppress repeat event delivery for three hours. Expired records are removed on subsequent activity; no message content or delivery history is retained.
