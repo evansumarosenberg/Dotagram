@@ -2,7 +2,7 @@
 
 **Audience:** the installation agent, whether Codex or ChatGPT Work, including a cloud session. The owner completes sign-in, BotFather, credential entry, and Telegram identity confirmation. The owner's intended **Dot in ChatGPT** creates and runs the native event automation. These are different roles; do not assume the installer is the controlling Dot.
 
-**Availability:** this is the target procedure for the revised owner-authenticated setup design. The three framework server actions are specified but not yet implemented or deployed. Before starting a fresh installation, confirm implementation-plan tasks 10-13 have been completed and the selected source contains the replacement. Do not treat missing setup controls as permission to revive the Python scripts. The existing installed bridge and its automation remain operational and must be preserved.
+**Availability:** the three framework server actions are implemented and locally verified in this checkout, but the replacement has not been deployed or accepted in a hosted owner session. Before installation, select this revised source and review the remaining hosted checks in [verification](verification.md#setup-revision-status-2026-11-08). The retired Python helpers are removed. Do not treat an older deployment's missing setup controls as permission to revive them. The existing installed bridge and its automation remain operational and must be preserved.
 
 Read [AGENTS.md](../AGENTS.md), [specification section 11](../plans/specification.md#11-owner-authenticated-setup-and-installation), and the current installed Sites skill, including its identity/secrets and Site MCP references. Use the application source and retained Sites integration; do not replace it with a starter or a separate compatibility service. This guide does not authorize implementation of missing features.
 
@@ -110,9 +110,9 @@ For an existing verified installation, compare the returned bot with its saved i
 
 ### Verify a fresh installation
 
-1. The setup page generates the nonce. Give the owner the bot username and direct them to open its private Telegram chat, start the conversation if necessary, and send that exact nonce from their intended account. Do not generate a different nonce in the installer chat.
+1. After **Inspect bot** reports no webhook, select **Generate nonce**. The setup page generates the nonce in browser memory. Give the owner the bot username and direct them to open its private Telegram chat, start the conversation if necessary, and send that exact nonce from their intended account. Do not generate a different nonce in the installer chat.
 2. After the owner sends it, invoke **Verify owner** (`verifyTelegramOwner`) once. The action reads at most one pending-update page, with no offset, filter change, or automatic polling. It returns a candidate numeric human ID and allowlisted bot information, not the message body or sender profile.
-3. Obtain the owner's explicit confirmation that this is the account they used and intend to connect. Bot identity verification alone is insufficient: `getMe.id` identifies the bot, not the human. Do not bind the first sender or use a username as authorization.
+3. Obtain the owner's explicit confirmation that this is the account they used and intend to connect. The page's confirmation checkbox reveals the final non-secret settings for the installer; it does not save them. Bot identity verification alone is insufficient: `getMe.id` identifies the bot, not the human. Do not bind the first sender or use a username as authorization.
 4. After confirmation, the installer saves `TELEGRAM_OWNER_USER_ID` as the decimal string and `TELEGRAM_BOT_INFO` as the exact validated configuration returned by setup, using Sites tools. With browser access, read these non-secret results directly; otherwise ask the owner to copy only the candidate ID and displayed allowlisted bot configuration. Do not request Telegram exports or screenshots containing unrelated messages.
 5. Deploy the final settings. Reopen setup and inspect the live bot again. Confirm required settings are present, the bot identity agrees, and the configured human ID is the explicitly confirmed one. Keep keys unchanged.
 
@@ -130,7 +130,7 @@ For an existing verified installation, compare the returned bot with its saved i
 
 **Inputs:** complete applied configuration and owner-authenticated setup.
 
-1. Invoke **Register webhook** (`registerTelegramWebhook`) from the setup UI. It derives this Site's `/telegram/webhook` URL using supported server-side request context, verifies the current bot/configuration, and uses the saved secret. The installer does not supply an arbitrary target or credential to the action.
+1. Invoke **Register or check webhook** (`registerTelegramWebhook`) from the setup UI. It derives this Site's `/telegram/webhook` URL from the original Worker request URL carried in request-local server context, verifies the current bot/configuration, and uses the saved secret. The installer does not supply an arbitrary target or credential to the action.
 2. If absent, registration makes one write with `allowed_updates: ["message", "edited_message"]`, `max_connections: 1`, and `drop_pending_updates: false`, followed by inspection.
 3. If already configured for this Site with matching public settings, accept the no-write result. If another destination or incompatible settings are detected, preserve the webhook and report the conflict. Do not take it over or clear pending updates.
 4. If the write times out or its result is uncertain, do not automatically repeat registration. Explicitly inspect first and report what is and is not known. Inspection cannot reveal the registered secret; matching public settings are not proof of secret equality.

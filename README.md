@@ -6,7 +6,7 @@ Dotagram receives new and edited **text messages from one explicitly configured 
 
 Only subscriptions and opaque deduplication records persist. Message content, write results, references, feedback, and conversation history are not stored. Your Dot maintains its own context. Delivery runs in bounded request background work: no queue, polling service, scheduler, or replay. An interrupted acknowledged update can be lost; duplicates and out-of-order events remain possible. A brief typing action follows confirmed callback receipt, not Dot completion.
 
-- [Installation](docs/install.md): target owner-authenticated setup procedure. The 2026-11-08 revision is specified but not yet implemented; existing messaging remains deployed.
+- [Installation](docs/install.md): owner-authenticated setup procedure. The replacement is implemented locally; deployment and hosted setup acceptance are pending. Existing messaging remains deployed.
 - [Tool and event reference](plugin/skills/use-dotagram/SKILL.md).
 - [Specification](plans/specification.md) and [implementation plan](plans/implementation-plan.md).
 - [Verification record](docs/verification.md): local results and pending hosted acceptance.
@@ -20,9 +20,12 @@ npm test
 npm run typecheck
 npm run build
 node tests/compatibility/worker-smoke.mjs
+node tests/compatibility/setup-worker.mjs
 ```
 
 Worker scenarios also accept `--scenario=retry`, `exhaustion`, `permanent`, `rate-limit`, `timeout`, `interrupt`, `fanout`, `duplicate`, and `notice-failure`. They exercise the built application using synthetic outbound services; no live Telegram account is contacted.
+
+The setup Worker check exercises the actual framework server-action path with synthetic identity and Telegram responses. Its optional `--preview` serves a local synthetic owner view for UI checks; it does not establish hosted authentication or contact Telegram. Production setup uses Sites-held secrets and explicit page actions, with no Python installer or credential handoff.
 
 This checkout already identifies the installed Site with MCP enabled; preserve that identity and configuration. A fresh installation begins with MCP publication disabled until owner configuration and identity-boundary checks are complete. Environment key names are documented in [.env.example](.env.example); never commit populated credentials.
 

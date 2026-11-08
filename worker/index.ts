@@ -3,6 +3,7 @@ import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { route } from '../lib/runtime/router';
 import type { Env } from '../lib/runtime/config';
+import { withSetupRequest } from '../lib/setup/request-context';
 
 const worker = {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
@@ -27,7 +28,7 @@ const worker = {
         },
       };
     }
-    return runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+    return withSetupRequest(request, () => runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx)));
   },
 };
 

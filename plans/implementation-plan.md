@@ -1,6 +1,6 @@
 # Dotagram implementation plan
 
-Status: original runtime implemented and deployed with qualified native acceptance; owner-authenticated setup revision planned, not implemented. See [verification record](../docs/verification.md).
+Status: original runtime deployed with qualified native acceptance; owner-authenticated setup revision implemented and locally verified, not deployed. See [verification record](../docs/verification.md).
 
 Last updated: 2026-11-08
 
@@ -12,7 +12,7 @@ Implement the reviewed specification by adapting the current SlackDot applicatio
 
 SlackDot already demonstrates MCP Events delivery through ChatGPT Sites. Build the intended Dotagram application directly. There is no separate compatibility prototype or feasibility phase; platform checks are ordinary verification of the resulting application.
 
-This plan was written before implementation. The implementation task has now completed the local application and validation work described below. The existing installation has passed messaging acceptance; outstanding checks are recorded separately. The 2026-11-08 setup revision below has not been implemented.
+This plan was written before implementation. The implementation task has completed the local application and validation work described below. The existing installation has passed messaging acceptance; outstanding checks are recorded separately. The 2026-11-08 setup revision is implemented locally; its deployment and hosted acceptance remain pending.
 
 ## 2. Constraints that apply to every task
 
@@ -45,10 +45,10 @@ Tasks describe a dependency order, not separate releases. Add focused tests alon
 | 7 | Installation instructions and plugin reference | 6 | Complete locally |
 | 8 | Integrated local tests, Worker build, and privacy verification | 6, 7 | Complete locally |
 | 9 | Original Sites installation and native acceptance | 8 | Messaging passed; remaining checks recorded |
-| 10 | Setup authorization and bootstrap API client | Revised specification section 11 | Planned |
-| 11 | Fixed setup actions and browser flow | 10 | Planned |
-| 12 | Retire Python workflow and reconcile documentation | 11 | Planned |
-| 13 | Replacement-flow validation and existing-Site upgrade | 10-12 | Planned |
+| 10 | Setup authorization and bootstrap API client | Revised specification section 11 | Complete locally |
+| 11 | Fixed setup actions and browser flow | 10 | Implemented; browser visual QA unavailable |
+| 12 | Retire Python workflow and reconcile documentation | 11 | Complete locally |
+| 13 | Replacement-flow validation and existing-Site upgrade | 10-12 | Local checks passed; deployment/hosted acceptance pending |
 
 ### Task 1 — Prepare the application foundation
 
@@ -254,12 +254,13 @@ Update the task statuses as work actually completes. Keep local implementation c
 - [x] Task 8: local tests, type checking, Sites build, and synthetic Worker checks passed.
 - [ ] Task 9: installation and native hosted acceptance completed, with any limitations stated.
 - [x] No additional application tables, Slack dependencies, or background delivery services introduced.
-- [ ] Retire the unapproved Python installation/custom credential handoff through tasks 10-13.
-- [ ] Owner-authenticated setup revision implemented and verified.
+- [x] Retire the unapproved Python installation/custom credential handoff through tasks 10-12.
+- [x] Owner-authenticated setup revision implemented and locally verified.
+- [ ] Task 13 hosted upgrade and owner-session acceptance (deployment explicitly excluded from this implementation request).
 - [x] Local fixtures use synthetic data. Subsequent authorized installation and owner-reported native acceptance are recorded separately.
 
 Local implementation results, dependency versions, test coverage and remaining hosted checks are recorded in [docs/verification.md](../docs/verification.md). No separate prototype was built. Authorized installation subsequently created the Site/webhook/plugin, and the intended Dot established native subscriptions; remaining hosted acceptance is tracked in the verification record.
 
 ## 6. Setup design clarification (2026-11-08)
 
-Tasks 10-13 use framework server actions rather than custom setup POST routes. The proposed custom origin checks and additional origin environment requirement are removed. Sites authentication and explicit server-side owner authorization remain required. Implementation has not begun. The installation guide now reflects this clarification and restores detailed agent/human handoffs, including locating the intended Dot. Task 12 must verify that guide against the actual replacement before release.
+Tasks 10-13 use framework server actions rather than custom setup POST routes. The proposed custom origin checks and additional origin environment requirement are removed. Sites authentication and explicit server-side owner authorization remain required. Tasks 10-12 and task 13's local validation are complete. The installation guide matches the replacement and preserves detailed agent/human handoffs, including locating the intended Dot. Deployment and hosted acceptance remain pending; no installed settings, bindings, subscriptions or automation were changed.

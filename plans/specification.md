@@ -1,6 +1,6 @@
 # Dotagram specification
 
-Status: messaging runtime deployed; owner-authenticated setup revision specified on 2026-11-08 and not yet implemented. This revision describes target behavior, not current availability. Acceptance evidence remains in docs/verification.md.
+Status: messaging runtime deployed; owner-authenticated setup revision implemented and locally verified on 2026-11-08. Deployment and hosted setup acceptance remain pending. Acceptance evidence remains in docs/verification.md.
 
 Last updated: 2026-11-08
 
@@ -110,7 +110,7 @@ docs/install.md                 Ordered installation procedure
 plugin/skills/use-dotagram/     Tool/event reference for the connected Dot
 ```
 
-These paths define implementation boundaries; the new lib/setup boundary remains planned. Existing runtime evidence does not establish implementation of the setup revision.
+These paths define implementation boundaries, including the implemented lib/setup boundary. Earlier messaging acceptance does not establish hosted acceptance of the setup revision.
 
 ## 5. Configuration and authorization
 

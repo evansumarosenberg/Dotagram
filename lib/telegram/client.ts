@@ -4,9 +4,8 @@ import { telegramConfig } from './config';
 import { TELEGRAM_CALL_MS } from '../events/budget';
 
 export type TelegramFetch=(url:string,init:RequestInit)=>Promise<Response>;
-export function createBot(env:Env,deadline=Infinity,transport:TelegramFetch=(url,init)=>globalThis.fetch(url,init)) {
-  const {botInfo}=telegramConfig(env);
-  return new Bot(env.TELEGRAM_BOT_TOKEN,{botInfo,client:{timeoutSeconds:5,canUseWebhookReply:()=>false,sensitiveLogs:false,
+export function telegramClientOptions(deadline=Infinity,transport:TelegramFetch=(url,init)=>globalThis.fetch(url,init)) {
+  return {timeoutSeconds:5,canUseWebhookReply:()=>false,sensitiveLogs:false,
     fetch:async(url:RequestInfo|URL,init?:RequestInit)=>{
       const remaining=Math.min(TELEGRAM_CALL_MS,deadline-Date.now());
       if(remaining<=0) throw new Failure('execution_deadline');
@@ -25,5 +24,9 @@ export function createBot(env:Env,deadline=Infinity,transport:TelegramFetch=(url
         const body=await boundedText(response,262144);
         return new Response(body,{status:response.status,headers:response.headers});
       } finally {clearTimeout(timer);init?.signal?.removeEventListener('abort',abort);}
-    }}});
+    }};
+}
+export function createBot(env:Env,deadline=Infinity,transport?:TelegramFetch) {
+  const {botInfo}=telegramConfig(env);
+  return new Bot(env.TELEGRAM_BOT_TOKEN,{botInfo,client:telegramClientOptions(deadline,transport)});
 }
