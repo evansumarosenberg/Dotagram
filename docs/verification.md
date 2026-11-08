@@ -1,6 +1,6 @@
 # Dotagram verification record
 
-Local implementation verified on 2026-11-07 (America/Chicago). Hosted installation and native ChatGPT/Telegram acceptance remain pending. No Site, live webhook, generated plugin, or native automation was created during local implementation.
+Local implementation verified on 2026-11-07 (America/Chicago). Initial Sites deployment subsequently succeeded; see [installation progress](installation-progress.md) for the exact source/deployment and hosted checks. Telegram configuration and native ChatGPT/Telegram acceptance remain pending. No live Telegram webhook, generated plugin, or native automation has been created.
 
 Source: working-tree implementation over repository revision `22df60b37a1d65c85fa29197045d0584daaae36e`. Changes are uncommitted; this is not a claim that the base revision contains the implementation. The checked-in lockfile identifies the dependency tree. Runtime/build/test-source SHA-256: `44eb0efd1fc5b1ae358c774f58fb33af9397acb4faaea7e24058c11defa167f6` (sorted path + NUL + file bytes + NUL over app/lib/worker/db/drizzle/scripts/tests/.openai and root package/build/type configuration).
 
@@ -59,3 +59,7 @@ Two integration corrections were made during validation: bridge grammY's abort-s
 - Hosted redeployment persistence and hosted database inspection remain pending. Local Worker restart persistence passed.
 
 Follow [installation](install.md) on the same future Site and record native/hosted evidence separately. Keep the accepted reliability limits: no payload replay, no exactly-once writes, possible duplicates/out-of-order events and loss after early acknowledgment, brief best-effort typing, and request-driven metadata deletion rather than an exact erasure schedule. Five-second Telegram request caps remain provisional until live measurements are available.
+
+## Hosted installation evidence (2026-11-07)
+
+Same Site deployed with environment revision 5. Genuine owner setup access and bounded live Telegram connection check passed. Anonymous forged setup identity redirects to sign-in; wrong webhook secret returns 403. Hosted D1 contains only subscriptions and event_dedup. Owner explicitly confirmed Telegram ID after nonce verification. Owner-reported registration helper success verifies exact webhook URL, message/edited_message allowlist, maximum connections one, and preservation of pending updates. Native ingress and intended-Dot round trip remain pending. See installation-progress.md for exact installation identifiers. These results supersede the corresponding pre-installation pending items above.
