@@ -1,6 +1,6 @@
 # Dotagram
 
-> The ’grams must flow.
+> To boldly gram where no Dot has grammed before.
 
 A lightweight bridge from your private Telegram bot conversation to your Dot, deployed on ChatGPT Sites. No external infrastructure needed!
 
